@@ -1493,6 +1493,7 @@ void SeatInterface::touchMove(qint32 id, const QPointF &globalPosition)
             [this, pos] (PointerInterface *p) {
                 wl_pointer_send_motion(p->resource(), timestamp(),
                                        wl_fixed_from_double(pos.x()), wl_fixed_from_double(pos.y()));
+                p->d_func()->sendFrame();
             }
         );
     }
@@ -1520,6 +1521,7 @@ void SeatInterface::touchUp(qint32 id)
         forEachInterface<PointerInterface>(focusedTouchSurface(), d->pointers,
             [this, serial] (PointerInterface *p) {
                 wl_pointer_send_button(p->resource(), serial, timestamp(), BTN_LEFT, WL_POINTER_BUTTON_STATE_RELEASED);
+                p->d_func()->sendFrame();
             }
         );
     }
