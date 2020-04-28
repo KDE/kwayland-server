@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Qt5Gui @REQUIRED_QT_VERSION@)
+find_dependency(KF5Wayland "@KF5_DEP_VERSION@")
+
+include("${CMAKE_CURRENT_LIST_DIR}/KWaylandServerTargets.cmake")
+@PACKAGE_INCLUDE_QCHTARGETS@
