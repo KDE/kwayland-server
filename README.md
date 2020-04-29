@@ -149,7 +149,7 @@ Now to link against the Client library use:
 To link against the Server library use:
 
     add_executable(exampleServer exampleServer.cpp)
-    target_link_libraries(exampleServer KF5::WaylandServer)
+    target_link_libraries(exampleServer Plasma::KWaylandServer)
 
 ### With QMake
 

@@ -12,7 +12,7 @@ libraries:
  - qmake: KWaylandClient
    cmake: "KF5::WaylandClient"
  - qmake: KWaylandServer
-   cmake: "KF5::WaylandServer"
+   cmake: "Plasma::KWaylandServer"
 cmakename: KF5Wayland
 
 public_lib: true
