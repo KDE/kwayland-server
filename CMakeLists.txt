@@ -37,7 +37,7 @@ ecm_setup_version(PROJECT VARIABLE_PREFIX KWAYLANDSERVER
 # Dependencies
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED Concurrent Gui WaylandClient)
 find_package(KF5Wayland ${KF5_MIN_VERSION} CONFIG REQUIRED)
-find_package(KF5PlasmaWaylandProtocols ${KF5_MIN_VERSION} CONFIG REQUIRED)
+find_package(PlasmaWaylandProtocols CONFIG REQUIRED)
 
 find_package(QtWaylandScanner REQUIRED)
 
