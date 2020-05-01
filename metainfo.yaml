@@ -1,6 +1,7 @@
 maintainer: graesslin
-description: Qt-style API to interact with the wayland-client and wayland-server API
-tier: 1
+description: Qt-style API to interact with the wayland-server API
+irc: kwin
+mailinglist: kwin
 type: integration
 platforms:
     - name: Linux
@@ -9,12 +10,7 @@ portingAid: false
 deprecated: false
 release: true
 libraries:
- - qmake: KWaylandClient
-   cmake: "KF5::WaylandClient"
- - qmake: KWaylandServer
-   cmake: "Plasma::KWaylandServer"
-cmakename: KF5Wayland
+   - cmake: "Plasma::KWaylandServer"
+cmakename: KWaylandServer
 
 public_lib: true
-group: Frameworks
-subgroup: Tier 1
