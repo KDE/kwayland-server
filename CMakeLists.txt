@@ -7,6 +7,9 @@ set(KF5_MIN_VERSION "5.70.0")
 
 project(KWaylandServer VERSION ${PROJECT_VERSION})
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # ECM setup
 include(FeatureSummary)
 find_package(ECM ${KF5_MIN_VERSION} NO_MODULE REQUIRED)
