@@ -118,6 +118,26 @@ OutputDeviceInterface::OutputDeviceInterface(Display *display, QObject *parent)
     : Global(new Private(this, display), parent)
 {
     Q_D();
+    connect(this, &OutputDeviceInterface::modesChanged, this,
+        [d] {
+            for(auto &resource : d->resources) {
+                typeof(d->modes[0]) *currentMode = nullptr;
+                for (auto &mode : d->modes) {
+                    if (mode.flags.testFlag(ModeFlag::Current))
+                        // needs to be sent as last mode
+                        currentMode = &mode;
+                    else
+                        d->sendMode(resource.resource, mode);
+                }
+
+                if (currentMode)
+                    d->sendMode(resource.resource, *currentMode);
+
+                d->sendDone(resource);
+            }
+            wl_display_flush_clients(*(d->display));
+        }
+    );
     connect(this, &OutputDeviceInterface::currentModeChanged, this,
         [d] {
             Q_ASSERT(d->currentMode.id >= 0);
@@ -223,16 +243,15 @@ void OutputDeviceInterface::addMode(Mode &mode)
         emitChanges();
         return;
     } else {
-        auto idIt = std::find_if(d->modes.constBegin(), d->modes.constEnd(),
+        auto idIt = std::find_if(d->modes.begin(), d->modes.end(),
                                         [mode](const Mode &mode_it) {
                                             return mode.id == mode_it.id;
                                         }
         );
-        if (idIt != d->modes.constEnd()) {
+        if (idIt != d->modes.end()) {
             qCWarning(KWAYLAND_SERVER) << "Duplicate Mode id" << mode.id << ": not adding mode" << mode.size << mode.refreshRate;
-            return;
+            d->modes.erase(idIt);
         }
-
     }
     d->modes << mode;
     emitChanges();
