@@ -28,6 +28,7 @@ class XdgPositionerData;
 class XdgToplevelInterface;
 class XdgPopupInterface;
 class XdgSurfaceInterface;
+class XdgToplevelSessionV1Interface;
 
 /**
  * The XdgShellInterface class represents an extension for destrop-style user interfaces.
@@ -239,6 +240,11 @@ public:
      * Returns the parent XdgToplevelInterface above which this toplevel is stacked.
      */
     XdgToplevelInterface *parentXdgToplevel() const;
+
+    /**
+     * Returns the session for this XdgToplevelInterface.
+     */
+    XdgToplevelSessionV1Interface *session() const;
 
     /**
      * Returns \c true if the toplevel has been configured; otherwise returns \c false.

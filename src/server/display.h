@@ -80,6 +80,8 @@ class ViewporterInterface;
 class ScreencastInterface;
 class InputMethodV1Interface;
 class InputPanelV1Interface;
+class XdgSessionManagerV1Interface;
+class XdgSessionStorageV1;
 
 /**
  * @brief Class holding the Wayland server display loop.
@@ -338,6 +340,11 @@ public:
      * Creates an interface to request video feeds of different compositor resources
      */
     ScreencastInterface *createScreencastInterface(QObject *parent = nullptr);
+
+    /**
+     * Creates an xdg session manager with the specified @p storage and @p parent.
+     */
+    XdgSessionManagerV1Interface *createXdgSessionManagerV1(XdgSessionStorageV1 *storage, QObject *parent = nullptr);
 
     /**
      * Gets the ClientConnection for the given @p client.

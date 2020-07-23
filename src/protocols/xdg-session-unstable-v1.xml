@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="xdg_session_unstable_v1">
+  <copyright>
+    Copyright 2018 Mike Blumenkrantz
+    Copyright 2018 Samsung Electronics Co., Ltd
+    Copyright 2018 Red Hat Inc.
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice (including the next
+    paragraph) shall be included in all copies or substantial portions of the
+    Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+  </copyright>
+
+  <interface name="zxdg_session_manager_v1" version="1">
+    <description summary="surface session manager">
+      The zxdg_session_manager_v1 interface defines base requests for creating
+      and managing a session for an application. Sessions persist across
+      application and compositor restarts unless explicitly destroyed. A session
+      is created for the purpose of maintaining an application's xdg_toplevel
+      surfaces across compositor or application restarts. The compositor should
+      remember as many states as possible for surfaces in a given session, but
+      there is no requirement for which states must be remembered.
+
+      Warning! The protocol described in this file is experimental and
+      backward incompatible changes may be made. Backward compatible changes
+      may be added together with the corresponding interface version bump.
+      Backward incompatible changes are done by bumping the version number in
+      the protocol and interface names and resetting the interface version.
+      Once the protocol is to be declared stable, the 'z' prefix and the
+      version number in the protocol and interface names are removed and the
+      interface version number is reset.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the session manager object">
+        Destroy the session manager. This doesn't destroy objects created
+        with the manager.
+      </description>
+    </request>
+
+    <request name="get_toplevel_session">
+      <description summary="create or restore a surface session object">
+        This creates an xdg_toplevel_session for the specified toplevel surface.
+
+        Creating an xdg_toplevel_session from an xdg_toplevel which has a
+        buffer attached or commited is a client error.
+
+        It is a client error if the given identifier string represents a session
+        which is already in use.
+
+        NULL is passed to initiate a new session. If an id is passed which does
+        not represent a valid session, the compositor treats it as if NULL had
+        been passed.
+      </description>
+      <arg name="id" type="new_id" interface="zxdg_toplevel_session_v1"/>
+      <arg name="session_id" type="string" allow-null="true"/>
+      <arg name="toplevel" type="object" interface="xdg_toplevel"/>
+    </request>
+  </interface>
+
+  <interface name="zxdg_toplevel_session_v1" version="1">
+    <enum name="error">
+      <entry name="unconfigured_buffer" value="0"
+             summary="xdg_toplevel has a buffer attached before configure"/>
+      <entry name="already_constructed" value="1"
+             summary="xdg_toplevel already has a session object"/>
+      <entry name="orphaned" value="2"
+             summary="xdg_toplevel destroyed before the sessino object"/>
+      <entry name="in_use" value="3"
+             summary="the requested session is already in use"/>
+    </enum>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the toplevel surface sessino object">
+        Destroy the session without removing it from the compositor's session
+        storage.
+      </description>
+    </request>
+
+    <request name="remove" type="destructor">
+      <description summary="remove the toplevel surface session object">
+        Destroy the session object and remove all data associated with it
+        from the compositor's session storage.
+      </description>
+    </request>
+
+    <event name="session_id">
+      <description summary="surface session id">
+        Sent immediately after the xdg_toplevel surface session object has
+        been created. This handle can be used later to restore a previous
+        session of the toplevel surface.
+      </description>
+      <arg name="id" type="string" summary="session handle"/>
+    </event>
+  </interface>
+</protocol>

@@ -16,6 +16,7 @@ namespace KWaylandServer
 {
 
 class XdgToplevelDecorationV1Interface;
+class XdgToplevelSessionV1Interface;
 
 class XdgShellInterfacePrivate : public QtWaylandServer::xdg_wm_base
 {
@@ -125,6 +126,7 @@ public:
     XdgToplevelInterface *q;
     QPointer<XdgToplevelInterface> parentXdgToplevel;
     QPointer<XdgToplevelDecorationV1Interface> decoration;
+    QPointer<XdgToplevelSessionV1Interface> session;
     XdgSurfaceInterface *xdgSurface;
 
     QString windowTitle;

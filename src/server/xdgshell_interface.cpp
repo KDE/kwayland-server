@@ -5,6 +5,7 @@
 */
 
 #include "xdgshell_interface.h"
+#include "xdgsession_v1_interface.h"
 #include "xdgshell_interface_p.h"
 
 #include "display.h"
@@ -545,6 +546,11 @@ bool XdgToplevelInterface::isConfigured() const
 XdgToplevelInterface *XdgToplevelInterface::parentXdgToplevel() const
 {
     return d->parentXdgToplevel;
+}
+
+XdgToplevelSessionV1Interface *XdgToplevelInterface::session() const
+{
+    return d->session;
 }
 
 QString XdgToplevelInterface::windowTitle() const

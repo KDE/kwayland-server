@@ -44,6 +44,7 @@
 #include "xdgdecoration_v1_interface.h"
 #include "xdgforeign_v2_interface.h"
 #include "xdgoutput_v1_interface.h"
+#include "xdgsession_v1_interface.h"
 #include "xdgshell_interface.h"
 #include "inputmethod_v1_interface.h"
 
@@ -520,6 +521,13 @@ InputPanelV1Interface *Display::createInputPanelInterface(QObject *parent)
     auto p = new InputPanelV1Interface(this, parent);
     connect(this, &Display::aboutToTerminate, p, [p] { delete p; });
     return p;
+}
+
+XdgSessionManagerV1Interface *Display::createXdgSessionManagerV1(XdgSessionStorageV1 *storage, QObject *parent)
+{
+    auto manager = new XdgSessionManagerV1Interface(this, storage, parent);
+    connect(this, &Display::aboutToTerminate, manager, [manager] { delete manager; });
+    return manager;
 }
 
 void Display::createShm()

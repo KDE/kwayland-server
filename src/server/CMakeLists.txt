@@ -65,6 +65,7 @@ set(SERVER_LIB_SRCS
     xdgdecoration_v1_interface.cpp
     xdgforeign_v2_interface.cpp
     xdgoutput_v1_interface.cpp
+    xdgsession_v1_interface.cpp
     xdgshell_interface.cpp
     screencast_interface.cpp
 )
@@ -262,6 +263,11 @@ ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
     BASENAME input-method-unstable-v1
 )
 
+ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
+    PROTOCOL ${PROJECT_SOURCE_DIR}/src/protocols/xdg-session-unstable-v1.xml
+    BASENAME xdg-session-unstable-v1
+)
+
 set(SERVER_GENERATED_SRCS
     ${CMAKE_CURRENT_BINARY_DIR}/wayland-blur-client-protocol.h
     ${CMAKE_CURRENT_BINARY_DIR}/wayland-blur-server-protocol.h
@@ -418,6 +424,7 @@ set(SERVER_LIB_HEADERS
   xdgdecoration_v1_interface.h
   xdgforeign_v2_interface.h
   xdgoutput_v1_interface.h
+  xdgsession_v1_interface.h
   xdgshell_interface.h
 )
 
