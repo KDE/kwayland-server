@@ -25,6 +25,7 @@ public:
     ~Private();
     void sendMode(wl_resource *resource, const Mode &mode);
     void sendDone(const ResourceData &data);
+    void updateGeometryAndScale();
     void updateGeometry();
     void updateScale();
 
@@ -44,6 +45,7 @@ public:
 
     static OutputInterface *get(wl_resource *native);
 
+    OutputGeometryUpdatesBlocker* ourBlocker = nullptr;
 private:
     static Private *cast(wl_resource *native);
     static void releaseCallback(wl_client *client, wl_resource *resource);
@@ -388,8 +390,32 @@ void OutputInterface::Private::sendDone(const ResourceData &data)
     wl_output_send_done(data.resource);
 }
 
+void OutputInterface::Private::updateGeometryAndScale()
+{
+    if (ourBlocker) {
+        if (!resources.isEmpty()) {
+            ourBlocker->m_geometryUpdated = true;
+            ourBlocker->m_scaleUpdated = true;
+        }
+        return;
+    }
+
+    for (auto it = resources.constBegin(); it != resources.constEnd(); ++it) {
+        sendGeometry((*it).resource);
+        sendScale(*it);
+        sendDone(*it);
+    }
+}
+
 void OutputInterface::Private::updateGeometry()
 {
+    if (ourBlocker) {
+        if (!resources.isEmpty()) {
+            ourBlocker->m_geometryUpdated = true;
+        }
+        return;
+    }
+
     for (auto it = resources.constBegin(); it != resources.constEnd(); ++it) {
         sendGeometry((*it).resource);
         sendDone(*it);
@@ -398,6 +424,13 @@ void OutputInterface::Private::updateGeometry()
 
 void OutputInterface::Private::updateScale()
 {
+    if (ourBlocker) {
+        if (!resources.isEmpty()) {
+            ourBlocker->m_scaleUpdated = true;
+        }
+        return;
+    }
+
     for (auto it = resources.constBegin(); it != resources.constEnd(); ++it) {
         sendScale(*it);
         sendDone(*it);
@@ -534,6 +567,31 @@ OutputInterface *OutputInterface::get(wl_resource* native)
 OutputInterface::Private *OutputInterface::d_func() const
 {
     return reinterpret_cast<Private*>(d.data());
+}
+
+OutputGeometryUpdatesBlocker::OutputGeometryUpdatesBlocker(OutputInterface* interface)
+    : m_interface(interface)
+{
+    if (!interface->d_func()->ourBlocker) {
+        interface->d_func()->ourBlocker = this;
+    }
+}
+
+OutputGeometryUpdatesBlocker::~OutputGeometryUpdatesBlocker()
+{
+    if (m_interface->d_func()->ourBlocker != this) {
+        return;
+    }
+
+    m_interface->d_func()->ourBlocker = nullptr;
+
+    if (m_geometryUpdated && m_scaleUpdated) {
+        m_interface->d_func()->updateGeometryAndScale();
+    } else if (m_geometryUpdated) {
+        m_interface->d_func()->updateGeometry();
+    } else if (m_scaleUpdated) {
+        m_interface->d_func()->updateScale();
+    }
 }
 
 }

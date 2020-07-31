@@ -22,6 +22,19 @@ namespace KWaylandServer
 
 class ClientConnection;
 class Display;
+class OutputInterface;
+
+class KWAYLANDSERVER_EXPORT OutputGeometryUpdatesBlocker
+{
+public:
+    OutputGeometryUpdatesBlocker(OutputInterface* interface);
+    ~OutputGeometryUpdatesBlocker();
+
+    bool m_geometryUpdated = false;
+    bool m_scaleUpdated = false;
+private:
+    OutputInterface* const m_interface;
+};
 
 /**
  * @brief Global for the wl_output interface.
@@ -148,6 +161,7 @@ Q_SIGNALS:
 
 private:
     friend class Display;
+    friend class OutputGeometryUpdatesBlocker;
     explicit OutputInterface(Display *display, QObject *parent = nullptr);
     class Private;
     Private *d_func() const;
