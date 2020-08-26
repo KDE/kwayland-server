@@ -54,11 +54,13 @@ public:
     LayerSurfaceV1InterfacePrivate(LayerSurfaceV1Interface *q, SurfaceInterface *surface);
 
     void commit() override;
+    void postCommit() override;
 
     LayerSurfaceV1Interface *q;
     LayerShellV1Interface *shell;
     QPointer<SurfaceInterface> surface;
     QPointer<OutputInterface> output;
+    LayerSurfaceV1State previous;
     LayerSurfaceV1State current;
     LayerSurfaceV1State pending;
     QQueue<quint32> serials;
@@ -292,16 +294,19 @@ void LayerSurfaceV1InterfacePrivate::commit()
         isCommitted = false;
         isConfigured = false;
 
+        previous = LayerSurfaceV1State();
         current = LayerSurfaceV1State();
         pending = LayerSurfaceV1State();
 
         return;
     }
 
-    const LayerSurfaceV1State previous = std::exchange(current, pending);
+    previous = std::exchange(current, pending);
+    isCommitted = true;
+}
 
-    isCommitted = true; // Must set the committed state before emitting any signals.
-
+void LayerSurfaceV1InterfacePrivate::postCommit()
+{
     if (previous.acceptsFocus != current.acceptsFocus) {
         emit q->acceptsFocusChanged();
     }

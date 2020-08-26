@@ -84,6 +84,7 @@ public:
     XdgSurfaceInterfacePrivate(XdgSurfaceInterface *xdgSurface);
 
     void commit();
+    void postCommit();
     void reset();
 
     XdgSurfaceInterface *q;
@@ -99,6 +100,7 @@ public:
         QRect windowGeometry;
     };
 
+    State previous;
     State next;
     State current;
 
@@ -119,6 +121,8 @@ public:
     XdgToplevelInterfacePrivate(XdgToplevelInterface *toplevel, XdgSurfaceInterface *surface);
 
     void commit() override;
+    void postCommit() override;
+
     void reset();
 
     static XdgToplevelInterfacePrivate *get(XdgToplevelInterface *toplevel);
@@ -138,6 +142,7 @@ public:
         QSize maximumSize;
     };
 
+    State previous;
     State next;
     State current;
 
@@ -167,6 +172,8 @@ public:
     XdgPopupInterfacePrivate(XdgPopupInterface *popup, XdgSurfaceInterface *surface);
 
     void commit() override;
+    void postCommit() override;
+
     void reset();
 
     XdgPopupInterface *q;

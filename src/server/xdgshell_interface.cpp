@@ -150,17 +150,23 @@ XdgSurfaceInterfacePrivate::XdgSurfaceInterfacePrivate(XdgSurfaceInterface *xdgS
 
 void XdgSurfaceInterfacePrivate::commit()
 {
-    if (current.windowGeometry != next.windowGeometry) {
-        current.windowGeometry = next.windowGeometry;
+    previous = std::exchange(current, next);
+    isMapped = surface->buffer();
+}
+
+void XdgSurfaceInterfacePrivate::postCommit()
+{
+    if (previous.windowGeometry != current.windowGeometry) {
         emit q->windowGeometryChanged(current.windowGeometry);
     }
-    isMapped = surface->buffer();
 }
 
 void XdgSurfaceInterfacePrivate::reset()
 {
     isConfigured = false;
-    current = next = State();
+    previous = State();
+    next = State();
+    current = State();
     emit q->resetOccurred();
 }
 
@@ -329,12 +335,18 @@ void XdgToplevelInterfacePrivate::commit()
         return;
     }
 
-    if (current.minimumSize != next.minimumSize) {
-        current.minimumSize = next.minimumSize;
+    previous = std::exchange(current, next);
+}
+
+void XdgToplevelInterfacePrivate::postCommit()
+{
+    auto xdgSurfacePrivate = XdgSurfaceInterfacePrivate::get(xdgSurface);
+    xdgSurfacePrivate->postCommit();
+
+    if (previous.minimumSize != current.minimumSize) {
         emit q->minimumSizeChanged(current.minimumSize);
     }
-    if (current.maximumSize != next.maximumSize) {
-        current.maximumSize = next.maximumSize;
+    if (previous.maximumSize != current.maximumSize) {
         emit q->maximumSizeChanged(current.maximumSize);
     }
 }
@@ -346,7 +358,10 @@ void XdgToplevelInterfacePrivate::reset()
 
     windowTitle = QString();
     windowClass = QString();
-    current = next = State();
+
+    previous = State();
+    next = State();
+    current = State();
 
     emit q->resetOccurred();
 }
@@ -666,6 +681,12 @@ void XdgPopupInterfacePrivate::commit()
     if (isResettable && !xdgSurfacePrivate->isMapped) {
         reset();
     }
+}
+
+void XdgPopupInterfacePrivate::postCommit()
+{
+    auto xdgSurfacePrivate = XdgSurfaceInterfacePrivate::get(xdgSurface);
+    xdgSurfacePrivate->postCommit();
 }
 
 void XdgPopupInterfacePrivate::reset()

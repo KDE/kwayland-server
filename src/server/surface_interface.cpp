@@ -594,6 +594,9 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
     if (!confinedPointer.isNull()) {
         confinedPointer->d_func()->commit();
     }
+    if (role) {
+        role->commit();
+    }
 
     *source = State{};
     source->children = target->children;
@@ -715,7 +718,7 @@ void SurfaceInterfacePrivate::commit()
         }
     }
     if (role) {
-        role->commit();
+        role->postCommit();
     }
     emit q->committed();
 }

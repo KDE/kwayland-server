@@ -26,6 +26,7 @@ public:
     }
 
     virtual void commit() = 0;
+    virtual void postCommit();
 
     static SurfaceRole *get(SurfaceInterface *surface);
 

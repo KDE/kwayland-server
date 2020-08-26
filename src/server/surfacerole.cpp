@@ -27,6 +27,10 @@ SurfaceRole::~SurfaceRole()
     }
 }
 
+void SurfaceRole::postCommit()
+{
+}
+
 SurfaceRole *SurfaceRole::get(SurfaceInterface *surface)
 {
     if (surface) {
