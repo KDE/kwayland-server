@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ECM setup
 include(FeatureSummary)
 find_package(ECM ${KF5_MIN_VERSION} NO_MODULE REQUIRED)
-set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
+set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
 include(CheckIncludeFile)
 include(CMakeFindFrameworks)
