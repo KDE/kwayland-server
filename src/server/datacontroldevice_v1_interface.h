@@ -40,9 +40,11 @@ public:
 
     void sendSelection(AbstractDataSource *other);
     void sendClearSelection();
+    uint lastReceivedSerial() const;
+    uint lastSentSerial() const;
 
 Q_SIGNALS:
-    void selectionChanged(KWaylandServer::DataControlSourceV1Interface *dataSource);
+    void selectionChanged(KWaylandServer::DataControlSourceV1Interface *dataSource, uint serial);
     void selectionCleared();
 
 private:

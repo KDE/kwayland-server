@@ -28,11 +28,16 @@ public:
     DataControlDeviceV1Interface *q;
     QPointer<SeatInterface> seat;
     QPointer<DataControlSourceV1Interface> selection;
+    uint lastReceivedSerial = 0;
+    uint lastSentSerial = 0;
 
 protected:
     void zwlr_data_control_device_v1_destroy_resource(Resource *resource) override;
     void zwlr_data_control_device_v1_set_selection(Resource *resource, wl_resource *source) override;
     void zwlr_data_control_device_v1_destroy(Resource *resource) override;
+    void zwlr_data_control_device_v1_set_selection_response(Resource *resource, wl_resource *source, uint32_t serial) override;
+private:
+    void setSelectionCommon(Resource *resource, wl_resource *source, uint serial);
 };
 
 
@@ -44,6 +49,17 @@ DataControlDeviceV1InterfacePrivate::DataControlDeviceV1InterfacePrivate(DataCon
 }
 
 void DataControlDeviceV1InterfacePrivate::zwlr_data_control_device_v1_set_selection(Resource *resource, wl_resource *source)
+{
+    // set_selection always wins, we ignore the serial
+    setSelectionCommon(resource, source, UINT_MAX);
+}
+
+void DataControlDeviceV1InterfacePrivate::zwlr_data_control_device_v1_set_selection_response(QtWaylandServer::zwlr_data_control_device_v1::Resource *resource, wl_resource *source, uint32_t serial)
+{
+    setSelectionCommon(resource, source, serial);
+}
+
+void DataControlDeviceV1InterfacePrivate::setSelectionCommon(Resource *resource, wl_resource *source, uint serial)
 {
     DataControlSourceV1Interface *dataSource = nullptr;
 
@@ -60,7 +76,7 @@ void DataControlDeviceV1InterfacePrivate::zwlr_data_control_device_v1_set_select
         selection->cancel();
     }
     selection = dataSource;
-    emit q->selectionChanged(selection);
+    emit q->selectionChanged(selection, serial);
 }
 
 void DataControlDeviceV1InterfacePrivate::zwlr_data_control_device_v1_destroy(QtWaylandServer::zwlr_data_control_device_v1::Resource *resource)
@@ -81,6 +97,11 @@ DataControlOfferV1Interface *DataControlDeviceV1InterfacePrivate::createDataOffe
     }
 
     DataControlOfferV1Interface *offer = new DataControlOfferV1Interface(source, data_offer_resource);
+    lastSentSerial++;
+
+    if (resource()->version() >= ZWLR_DATA_CONTROL_DEVICE_V1_SELECTION_SERIAL_SINCE_VERSION) {
+        send_selection_serial(lastSentSerial);
+    }
     send_data_offer(offer->resource());
     offer->sendAllOffers();
     return offer;
@@ -126,7 +147,23 @@ void DataControlDeviceV1Interface::sendSelection(AbstractDataSource *other)
 
 void DataControlDeviceV1Interface::sendClearSelection()
 {
+    d->lastSentSerial++;
+
+    if (d->resource()->version() >= ZWLR_DATA_CONTROL_DEVICE_V1_SELECTION_SERIAL_SINCE_VERSION) {
+        d->send_selection_serial(d->lastSentSerial);
+    }
+
     d->send_selection(nullptr);
+}
+
+uint DataControlDeviceV1Interface::lastReceivedSerial() const
+{
+    return d->lastReceivedSerial;
+}
+
+uint DataControlDeviceV1Interface::lastSentSerial() const
+{
+    return d->lastSentSerial;
 }
 
 }

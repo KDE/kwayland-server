@@ -79,6 +79,7 @@ public:
 Q_SIGNALS:
     void dataControlOffer(DataControlOffer *offer); //our event receives a new ID, so we make a new object
     void selection(struct ::zwlr_data_control_offer_v1 *id);
+    void selectionSerial(uint serial);
 protected:
     void zwlr_data_control_device_v1_data_offer(struct ::zwlr_data_control_offer_v1 *id) override {
         auto offer = new DataControlOffer;
@@ -88,6 +89,10 @@ protected:
 
     void zwlr_data_control_device_v1_selection(struct ::zwlr_data_control_offer_v1 *id) override {
         Q_EMIT selection(id);
+    }
+
+    void zwlr_data_control_device_v1_selection_serial(uint32_t serial) override {
+        Q_EMIT selectionSerial(serial);
     }
 };
 
@@ -313,7 +318,9 @@ void DataControlInterfaceTest::testKlipperCase()
     dataControlDevice->init(m_dataControlDeviceManager->get_data_device(*m_clientSeat));
 
     QSignalSpy newOfferSpy(dataControlDevice.data(), &DataControlDevice::dataControlOffer);
+
     QSignalSpy selectionSpy(dataControlDevice.data(), &DataControlDevice::selection);
+    QSignalSpy selectionSerialSpy(dataControlDevice.data(), &DataControlDevice::selectionSerial);
     QSignalSpy serverSelectionChangedSpy(m_seat, &SeatInterface::selectionChanged);
 
     // Client A has a data source
@@ -322,6 +329,7 @@ void DataControlInterfaceTest::testKlipperCase()
 
     // klipper gets it
     selectionSpy.wait();
+    QCOMPARE(selectionSerialSpy.count(), 1);
 
     // Client A deletes it
     testSelection.reset();
@@ -337,10 +345,10 @@ void DataControlInterfaceTest::testKlipperCase()
     QScopedPointer<DataControlSource> source(new DataControlSource);
     source->init(m_dataControlDeviceManager->create_data_source());
     source->offer("fromKlipper/test1");
-    source->offer("application/x-kde-onlyReplaceEmpty");
 
-    dataControlDevice->set_selection(source->object());
+    dataControlDevice->set_selection_response(source->object(), selectionSerialSpy.first()[0].toUInt());
 
+    // serial was old so nothing happened
     QVERIFY(!serverSelectionChangedSpy.wait(10));
     QCOMPARE(m_seat->selection(), testSelection2.data());
 }

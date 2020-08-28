@@ -345,16 +345,14 @@ void SeatInterface::Private::registerDataControlDevice(DataControlDeviceV1Interf
     QObject::connect(dataDevice, &QObject::destroyed, q, dataDeviceCleanup);
 
     QObject::connect(dataDevice, &DataControlDeviceV1Interface::selectionChanged, q,
-                     [this, dataDevice] {
-        // Special klipper workaround to avoid a race
-        // If the mimetype x-kde-onlyReplaceEmpty is set, and we've had another update in the meantime, do nothing
+                     [this, dataDevice](DataControlSourceV1Interface *selection, uint serial) {
+        // Guard to avoid a race. If this is a reply to something newer than the last thing sent to this dataDevice, ignore any updates
         // See https://github.com/swaywm/wlr-protocols/issues/92
-        if  (dataDevice->selection() && dataDevice->selection()->mimeTypes().contains(QLatin1String("application/x-kde-onlyReplaceEmpty")) &&
-             currentSelection) {
-            dataDevice->selection()->cancel();
+        if  (dataDevice->lastSentSerial() > serial) {
+            selection->cancel();
             return;
         }
-        q->setSelection(dataDevice->selection());
+        q->setSelection(selection);
     }
     );
 
