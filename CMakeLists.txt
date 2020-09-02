@@ -4,6 +4,7 @@ set(PROJECT_VERSION_MAJOR 5)
 
 set(QT_MIN_VERSION "5.14.0")
 set(KF5_MIN_VERSION "5.70.0")
+set(WAYLAND_MIN_VERSION "1.15")
 
 project(KWaylandServer VERSION ${PROJECT_VERSION})
 
@@ -44,7 +45,7 @@ find_package(PlasmaWaylandProtocols CONFIG REQUIRED)
 
 find_package(QtWaylandScanner REQUIRED)
 
-find_package(Wayland 1.15 COMPONENTS Client Server)
+find_package(Wayland ${WAYLAND_MIN_VERSION} COMPONENTS Client Server)
 set_package_properties(Wayland PROPERTIES
                        TYPE REQUIRED
                       )
