@@ -5,8 +5,10 @@
     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
 */
 #include "display.h"
+#include "clientbuffermanager_p.h"
 #include "display_p.h"
 #include "logging.h"
+#include "rendererinterface.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -37,11 +39,18 @@ Display::Display(QObject *parent)
 {
     d->display = wl_display_create();
     d->loop = wl_display_get_event_loop(d->display);
+
+    d->rendererInterface = new RendererInterface(this);
+    d->bufferManager = new ClientBufferManager(this);
 }
 
 Display::~Display()
 {
     wl_display_destroy_clients(d->display);
+
+    delete d->bufferManager;
+    delete d->rendererInterface;
+
     wl_display_destroy(d->display);
 }
 
@@ -96,6 +105,8 @@ bool Display::start()
     QAbstractEventDispatcher *dispatcher = QCoreApplication::eventDispatcher();
     connect(dispatcher, &QAbstractEventDispatcher::aboutToBlock, this, &Display::flush);
 
+    d->bufferManager->initialize();
+
     d->running = true;
     emit runningChanged(true);
 
@@ -112,12 +123,6 @@ void Display::dispatchEvents()
 void Display::flush()
 {
     wl_display_flush_clients(d->display);
-}
-
-void Display::createShm()
-{
-    Q_ASSERT(d->display);
-    wl_display_init_shm(d->display);
 }
 
 quint32 Display::nextSerial()
@@ -203,18 +208,9 @@ ClientConnection *Display::createClient(int fd)
     return getConnection(c);
 }
 
-void Display::setEglDisplay(void *display)
+RendererInterface *Display::rendererInterface() const
 {
-    if (d->eglDisplay != EGL_NO_DISPLAY) {
-        qCWarning(KWAYLAND_SERVER) << "EGLDisplay cannot be changed";
-        return;
-    }
-    d->eglDisplay = (EGLDisplay)display;
-}
-
-void *Display::eglDisplay() const
-{
-    return d->eglDisplay;
+    return d->rendererInterface;
 }
 
 }

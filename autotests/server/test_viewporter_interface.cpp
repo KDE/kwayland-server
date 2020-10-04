@@ -62,7 +62,6 @@ void TestViewporterInterface::initTestCase()
     m_display.start();
     QVERIFY(m_display.isRunning());
 
-    m_display.createShm();
     new ViewporterInterface(&m_display);
 
     m_serverCompositor = new CompositorInterface(&m_display, this);

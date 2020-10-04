@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <KWaylandServer/kwaylandserver_export.h>
 #include <wayland-server-core.h>
 
 #include <QList>
@@ -14,18 +15,29 @@
 #include <QString>
 #include <QVector>
 
-#include <EGL/egl.h>
+#include <epoxy/egl.h>
 
 namespace KWaylandServer
 {
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is part of the KWaylandServer API and is not meant to be used
+// in applications. Usage of this API may make your code
+// source and binary incompatible with future versions of KWaylandServer.
+//
+
+class ClientBufferManager;
 class ClientConnection;
 class Display;
 class OutputInterface;
 class OutputDeviceInterface;
+class RendererInterface;
 class SeatInterface;
 
-class DisplayPrivate
+class KWAYLANDSERVER_EXPORT DisplayPrivate
 {
 public:
     static DisplayPrivate *get(Display *display);
@@ -44,6 +56,8 @@ public:
     QVector<ClientConnection *> clients;
     QStringList socketNames;
     EGLDisplay eglDisplay = EGL_NO_DISPLAY;
+    ClientBufferManager *bufferManager = nullptr;
+    RendererInterface *rendererInterface = nullptr;
 };
 
 } // namespace KWaylandServer

@@ -23,7 +23,7 @@
 #include "KWayland/Client/subcompositor.h"
 #include "KWayland/Client/subsurface.h"
 #include "KWayland/Client/touch.h"
-#include "../../src/server/buffer_interface.h"
+#include "../../src/server/clientbufferref.h"
 #include "../../src/server/compositor_interface.h"
 #include "../../src/server/datadevicemanager_interface.h"
 #include "../../src/server/datasource_interface.h"
@@ -126,7 +126,6 @@ void TestWaylandSeat::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
 
     m_compositorInterface = new CompositorInterface(m_display, m_display);
     m_subCompositorInterface = new SubCompositorInterface(m_display, m_display);
@@ -1403,7 +1402,7 @@ void TestWaylandSeat::testCursor()
     QCOMPARE(changedSpy.count(), 3);
     QCOMPARE(cursorChangedSpy.count(), 4);
     QCOMPARE(surfaceChangedSpy.count(), 1);
-    QCOMPARE(cursor->surface()->buffer()->data(), img);
+    QCOMPARE(cursor->surface()->buffer().toImage(), img);
 
     // and add another image to the surface
     QImage blue(QSize(10, 20), QImage::Format_ARGB32_Premultiplied);
@@ -1414,7 +1413,7 @@ void TestWaylandSeat::testCursor()
     QVERIFY(changedSpy.wait());
     QCOMPARE(changedSpy.count(), 4);
     QCOMPARE(cursorChangedSpy.count(), 5);
-    QCOMPARE(cursor->surface()->buffer()->data(), blue);
+    QCOMPARE(cursor->surface()->buffer().toImage(), blue);
 
     p->hideCursor();
     QVERIFY(surfaceChangedSpy.wait());
@@ -1467,7 +1466,7 @@ void TestWaylandSeat::testCursorDamage()
     cursorSurface->commit(Surface::CommitFlag::None);
     p->setCursor(cursorSurface, QPoint(0, 0));
     QVERIFY(cursorChangedSpy.wait());
-    QCOMPARE(pointer->cursor()->surface()->buffer()->data(), red);
+    QCOMPARE(pointer->cursor()->surface()->buffer().toImage(), red);
 
     // and damage the surface
     QImage blue(QSize(10, 10), QImage::Format_ARGB32_Premultiplied);
@@ -1476,7 +1475,7 @@ void TestWaylandSeat::testCursorDamage()
     cursorSurface->damage(QRect(0, 0, 10, 10));
     cursorSurface->commit(Surface::CommitFlag::None);
     QVERIFY(cursorChangedSpy.wait());
-    QCOMPARE(pointer->cursor()->surface()->buffer()->data(), blue);
+    QCOMPARE(pointer->cursor()->surface()->buffer().toImage(), blue);
 }
 
 void TestWaylandSeat::testKeyboard()

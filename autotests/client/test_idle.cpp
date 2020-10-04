@@ -52,7 +52,6 @@ void IdleTest::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
     m_seatInterface = new SeatInterface(m_display);
     m_seatInterface->setName(QStringLiteral("seat0"));
     m_seatInterface->create();

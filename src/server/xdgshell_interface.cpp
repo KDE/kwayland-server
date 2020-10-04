@@ -7,6 +7,7 @@
 #include "xdgshell_interface.h"
 #include "xdgshell_interface_p.h"
 
+#include "clientbufferref.h"
 #include "display.h"
 #include "output_interface.h"
 #include "seat_interface.h"

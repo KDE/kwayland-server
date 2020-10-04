@@ -19,7 +19,7 @@
 namespace KWaylandServer
 {
 class BlurInterface;
-class BufferInterface;
+class ClientBufferRef;
 class ConfinedPointerV1Interface;
 class ContrastInterface;
 class CompositorInterface;
@@ -41,13 +41,7 @@ class SurfaceInterfacePrivate;
  * This should make interacting from the server easier, it only needs to monitor the SurfaceInterface
  * and does not need to track each specific interface.
  *
- * The SurfaceInterface takes care of reference/unreferencing the BufferInterface attached to it.
- * As long as a BufferInterface is attached, the released signal won't be sent. If the BufferInterface
- * is no longer needed by the SurfaceInterface, it will get unreferenced and might be automatically
- * deleted (if it's no longer referenced).
- *
  * @see CompositorInterface
- * @see BufferInterface
  * @see SubSurfaceInterface
  * @see BlurInterface
  * @see ContrastInterface
@@ -174,9 +168,9 @@ public:
      */
     OutputInterface::Transform bufferTransform() const;
     /**
-     * @returns the current BufferInterface, might be @c nullptr.
+     * @returns the current buffer, might be @c nullptr.
      **/
-    BufferInterface *buffer();
+    ClientBufferRef buffer();
     QPoint offset() const;
     /**
      * Returns the current size of the surface, in surface coordinates.
@@ -235,42 +229,14 @@ public:
 
     /**
      * Whether the SurfaceInterface is currently considered to be mapped.
-     * A SurfaceInterface is mapped if it has a non-null BufferInterface attached.
+     * A SurfaceInterface is mapped if it has a non-null buffer attached.
      * If the SurfaceInterface references a SubSurfaceInterface it is only considered
-     * mapped if it has a BufferInterface attached and the parent SurfaceInterface is mapped.
+     * mapped if it has a buffer attached and the parent SurfaceInterface is mapped.
      *
      * @returns Whether the SurfaceInterface is currently mapped
      * @since 5.22
      **/
     bool isMapped() const;
-
-    /**
-     * Returns the tracked damage since the last call to  {@link resetTrackedDamage}.
-     * In contrast to {@link damage} this method does not reset the damage when
-     * a new BufferInterface gets committed. This allows a compositor to properly
-     * track the damage over multiple commits even if it didn't render each new
-     * BufferInterface.
-     *
-     * The damage gets reset whenever {@link resetTrackedDamage} is called.
-     * This allows a compositor to properly track the change in its rendering scene
-     * for this SurfaceInterface. After it updates its internal state (e.g. by creating
-     * an OpenGL texture from the BufferInterface) it can invoke {@link resetTrackedDamage}
-     * and the damage tracker will start to track further damage changes.
-     *
-     * @returns Combined damage since last call to resetTrackedDamage
-     * @see damage
-     * @see resetTrackedDamage
-     * @since 5.22
-     **/
-    QRegion trackedDamage() const;
-
-    /**
-     * Reset the damage tracking. The compositor should invoke this method once it updated
-     * it's internal state and processed the current damage.
-     * @see trackedDamage
-     * @since 5.22
-     **/
-    void resetTrackedDamage();
 
     /**
      * Finds the SurfaceInterface at the given @p position in surface-local coordinates.
@@ -388,7 +354,7 @@ Q_SIGNALS:
     /**
      * Emitted whenever the SurfaceInterface got damaged.
      * The signal is only emitted during the commit of state.
-     * A damage means that a new BufferInterface got attached.
+     * A damage means that a new buffer got attached.
      *
      * @see buffer
      * @see damage
@@ -481,8 +447,6 @@ Q_SIGNALS:
     void committed();
 
 private:
-    void handleBufferRemoved(BufferInterface *buffer);
-
     QScopedPointer<SurfaceInterfacePrivate> d;
     friend class SurfaceInterfacePrivate;
 };

@@ -38,6 +38,7 @@ class ClientConnection;
 class DisplayPrivate;
 class OutputInterface;
 class OutputDeviceInterface;
+class RendererInterface;
 class SeatInterface;
 
 /**
@@ -107,7 +108,6 @@ public:
     operator wl_display*() const;
     bool isRunning() const;
 
-    void createShm();
     /**
      * @returns All SeatInterface currently managed on the Display.
      * @since 5.6
@@ -126,21 +126,9 @@ public:
     QVector<ClientConnection*> connections() const;
 
     /**
-     * Set the EGL @p display for this Wayland display.
-     * The EGLDisplay can only be set once and must be alive as long as the Wayland display
-     * is alive. The user should have set up the binding between the EGLDisplay and the
-     * Wayland display prior to calling this method.
-     *
-     * @see eglDisplay
-     * @since 5.3
-     **/
-    void setEglDisplay(void *display);
-    /**
-     * @returns the EGLDisplay used for this Wayland display or EGL_NO_DISPLAY if not set.
-     * @see setEglDisplay
-     * @since 5.3
-     **/
-    void *eglDisplay() const;
+     * Returns the entry point for accessing the renderer specific APIs.
+     */
+    RendererInterface *rendererInterface() const;
 
 private Q_SLOTS:
     void flush();

@@ -5,8 +5,10 @@
     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
 */
 #include "surface_interface.h"
+#include "clientbuffer_p.h"
+#include "clientbuffermanager_p.h"
+#include "display_p.h"
 #include "surface_interface_p.h"
-#include "buffer_interface.h"
 #include "clientconnection.h"
 #include "compositor_interface.h"
 #include "display.h"
@@ -22,6 +24,50 @@
 
 namespace KWaylandServer
 {
+
+DamageJournal::DamageJournal()
+{
+    static int s_handle = 0;
+    m_handle = ++s_handle;
+}
+
+void DamageJournal::add(const QRegion &region)
+{
+    if (m_queue.count() >= 5) {
+        m_queue.dequeue();
+    }
+    m_queue.enqueue(region);
+    m_cursor++;
+}
+
+quint64 DamageJournal::handle() const
+{
+    return m_handle;
+}
+
+quint64 DamageJournal::cursor() const
+{
+    return m_cursor;
+}
+
+QRegion DamageJournal::query(quint64 cursor) const
+{
+    if (Q_UNLIKELY(m_cursor < cursor)) {
+        return infiniteRegion();
+    }
+
+    const quint64 delta = m_cursor - cursor;
+    if (delta > quint64(m_queue.size())) {
+        return infiniteRegion();
+    }
+
+    QRegion region;
+    for (int i = m_queue.size() - delta; i < m_queue.size(); ++i) {
+        region |= m_queue[i];
+    }
+
+    return region;
+}
 
 QList<SurfaceInterface *> SurfaceInterfacePrivate::surfaces;
 
@@ -71,9 +117,6 @@ SurfaceInterfacePrivate::~SurfaceInterfacePrivate()
         frameCallback->destroy();
     }
 
-    if (current.buffer) {
-        current.buffer->unref();
-    }
     surfaces.removeOne(q);
 }
 
@@ -304,8 +347,9 @@ void SurfaceInterfacePrivate::surface_attach(Resource *resource, struct ::wl_res
         pending.bufferDamage = QRegion();
         return;
     }
-    pending.buffer = BufferInterface::get(compositor->display(), buffer);
-    QObject::connect(pending.buffer, &BufferInterface::aboutToBeDestroyed, q, &SurfaceInterface::handleBufferRemoved,  Qt::UniqueConnection);
+
+    DisplayPrivate *displayPrivate = DisplayPrivate::get(compositor->display());
+    pending.buffer = displayPrivate->bufferManager->bufferForResource(buffer);
 }
 
 void SurfaceInterfacePrivate::surface_damage(Resource *, int32_t x, int32_t y, int32_t width, int32_t height)
@@ -445,6 +489,7 @@ QMatrix4x4 SurfaceInterfacePrivate::buildSurfaceToBufferMatrix(const State *stat
         return surfaceToBufferMatrix;
     }
 
+    const QSize bufferSize = state->buffer->size();
     surfaceToBufferMatrix.scale(state->bufferScale, state->bufferScale);
 
     switch (state->bufferTransform) {
@@ -453,18 +498,18 @@ QMatrix4x4 SurfaceInterfacePrivate::buildSurfaceToBufferMatrix(const State *stat
         break;
     case OutputInterface::Transform::Rotated90:
     case OutputInterface::Transform::Flipped90:
-        surfaceToBufferMatrix.translate(0, state->buffer->height() / state->bufferScale);
+        surfaceToBufferMatrix.translate(0, bufferSize.height() / state->bufferScale);
         surfaceToBufferMatrix.rotate(-90, 0, 0, 1);
         break;
     case OutputInterface::Transform::Rotated180:
     case OutputInterface::Transform::Flipped180:
-        surfaceToBufferMatrix.translate(state->buffer->width() / state->bufferScale,
-                                        state->buffer->height() / state->bufferScale);
+        surfaceToBufferMatrix.translate(bufferSize.width() / state->bufferScale,
+                                        bufferSize.height() / state->bufferScale);
         surfaceToBufferMatrix.rotate(-180, 0, 0, 1);
         break;
     case OutputInterface::Transform::Rotated270:
     case OutputInterface::Transform::Flipped270:
-        surfaceToBufferMatrix.translate(state->buffer->width() / state->bufferScale, 0);
+        surfaceToBufferMatrix.translate(bufferSize.width() / state->bufferScale, 0);
         surfaceToBufferMatrix.rotate(-270, 0, 0, 1);
         break;
     }
@@ -472,12 +517,12 @@ QMatrix4x4 SurfaceInterfacePrivate::buildSurfaceToBufferMatrix(const State *stat
     switch (state->bufferTransform) {
     case OutputInterface::Transform::Flipped:
     case OutputInterface::Transform::Flipped180:
-        surfaceToBufferMatrix.translate(state->buffer->width() / state->bufferScale, 0);
+        surfaceToBufferMatrix.translate(bufferSize.width() / state->bufferScale, 0);
         surfaceToBufferMatrix.scale(-1, 1);
         break;
     case OutputInterface::Transform::Flipped90:
     case OutputInterface::Transform::Flipped270:
-        surfaceToBufferMatrix.translate(state->buffer->height() / state->bufferScale, 0);
+        surfaceToBufferMatrix.translate(bufferSize.height() / state->bufferScale, 0);
         surfaceToBufferMatrix.scale(-1, 1);
         break;
     default:
@@ -512,18 +557,6 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
     const QRegion oldInputRegion = inputRegion;
     if (bufferChanged) {
         // TODO: is the reffing correct for subsurfaces?
-        if (target->buffer) {
-            if (emitChanged) {
-                target->buffer->unref();
-            } else {
-                target->buffer = nullptr;
-            }
-        }
-        if (source->buffer) {
-            if (emitChanged) {
-                source->buffer->ref();
-            }
-        }
         target->buffer = source->buffer;
         target->offset = source->offset;
         target->damage = source->damage;
@@ -591,6 +624,7 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
     if (!emitChanged) {
         return;
     }
+    bufferRef = target->buffer;
     // TODO: Refactor the state management code because it gets more clumsy.
     if (target->buffer) {
         bufferSize = target->buffer->size();
@@ -643,19 +677,29 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
         }
     }
     if (bufferChanged) {
-        if (target->buffer && (!target->damage.isEmpty() || !target->bufferDamage.isEmpty())) {
-            const QRegion windowRegion = QRegion(0, 0, q->size().width(), q->size().height());
-            const QRegion bufferDamage = q->mapFromBuffer(target->bufferDamage);
-            target->damage = windowRegion.intersected(target->damage.united(bufferDamage));
-            trackedDamage |= target->damage;
-            emit q->damaged(target->damage);
-            // workaround for https://bugreports.qt.io/browse/QTBUG-52092
-            // if the surface is a sub-surface, but the main surface is not yet mapped, fake frame rendered
-            if (subSurface) {
-                const auto mainSurface = subSurface->mainSurface();
-                if (!mainSurface || !mainSurface->buffer()) {
-                    q->frameRendered(0);
+        if (target->buffer) {
+            if (!target->damage.isEmpty() || !target->bufferDamage.isEmpty()) {
+                const QRegion windowRegion = QRegion(0, 0, q->size().width(), q->size().height());
+                const QRegion bufferDamage = q->mapFromBuffer(target->bufferDamage);
+                target->damage = windowRegion.intersected(target->damage.united(bufferDamage));
+                damageHistory.add(target->damage);
+                emit q->damaged(target->damage);
+                // workaround for https://bugreports.qt.io/browse/QTBUG-52092
+                // if the surface is a sub-surface, but the main surface is not yet mapped, fake frame rendered
+                if (subSurface) {
+                    const auto mainSurface = subSurface->mainSurface();
+                    if (!mainSurface || !mainSurface->buffer()) {
+                        q->frameRendered(0);
+                    }
                 }
+            }
+
+            if (target->buffer->damageHandle() != damageHistory.handle()) {
+                target->buffer->markAsDirty(infiniteRegion(),
+                                            damageHistory.cursor(), damageHistory.handle());
+            } else {
+                target->buffer->markAsDirty(q->mapToBuffer(damageHistory.query(target->buffer->damageCursor())),
+                                            damageHistory.cursor(), damageHistory.handle());
             }
         }
     }
@@ -730,9 +774,9 @@ OutputInterface::Transform SurfaceInterface::bufferTransform() const
     return d->current.bufferTransform;
 }
 
-BufferInterface *SurfaceInterface::buffer()
+ClientBufferRef SurfaceInterface::buffer()
 {
-    return d->current.buffer;
+    return d->bufferRef;
 }
 
 QPoint SurfaceInterface::offset() const
@@ -815,16 +859,6 @@ bool SurfaceInterface::isMapped() const
         return d->subSurfaceIsMapped && d->subSurface->parentSurface() && d->subSurface->parentSurface()->isMapped();
     }
     return d->current.buffer != nullptr;
-}
-
-QRegion SurfaceInterface::trackedDamage() const
-{
-    return d->trackedDamage;
-}
-
-void SurfaceInterface::resetTrackedDamage()
-{
-    d->trackedDamage = QRegion();
 }
 
 QVector<OutputInterface *> SurfaceInterface::outputs() const
@@ -963,6 +997,10 @@ QPointF SurfaceInterface::mapFromBuffer(const QPointF &point) const
 
 static QRegion map_helper(const QMatrix4x4 &matrix, const QRegion &region)
 {
+    if (region == infiniteRegion()) {
+        return infiniteRegion();
+    }
+
     QRegion result;
     for (const QRect &rect : region) {
         result += matrix.mapRect(rect);
@@ -983,20 +1021,6 @@ QRegion SurfaceInterface::mapFromBuffer(const QRegion &region) const
 QMatrix4x4 SurfaceInterface::surfaceToBufferMatrix() const
 {
     return d->surfaceToBufferMatrix;
-}
-
-void SurfaceInterface::handleBufferRemoved(BufferInterface *buffer)
-{
-    if (d->pending.buffer == buffer) {
-        d->pending.buffer = nullptr;
-    }
-    if (d->cached.buffer == buffer) {
-        d->cached.buffer = nullptr;
-    }
-    if (d->current.buffer == buffer) {
-        d->current.buffer->unref();
-        d->current.buffer = nullptr;
-    }
 }
 
 } // namespace KWaylandServer

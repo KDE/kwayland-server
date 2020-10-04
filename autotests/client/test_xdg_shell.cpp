@@ -92,7 +92,6 @@ void XdgShellTest::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
     m_o1Interface = new OutputInterface(m_display, m_display);
     m_o1Interface->addMode(QSize(1024, 768));
     m_o1Interface->create();

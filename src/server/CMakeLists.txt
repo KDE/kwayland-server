@@ -2,7 +2,11 @@ set(SERVER_LIB_SRCS
     abstract_data_source.cpp
     appmenu_interface.cpp
     blur_interface.cpp
-    buffer_interface.cpp
+    clientbuffer.cpp
+    clientbufferintegration.cpp
+    clientbufferintegrationfactory.cpp
+    clientbuffermanager.cpp
+    clientbufferref.cpp
     clientconnection.cpp
     compositor_interface.cpp
     contrast_interface.cpp
@@ -16,7 +20,6 @@ set(SERVER_LIB_SRCS
     datasource_interface.cpp
     display.cpp
     dpms_interface.cpp
-    eglstream_controller_interface.cpp
     fakeinput_interface.cpp
     filtered_display.cpp
     global.cpp
@@ -27,7 +30,6 @@ set(SERVER_LIB_SRCS
     keyboard_shortcuts_inhibit_v1_interface.cpp
     keystate_interface.cpp
     layershell_v1_interface.cpp
-    linuxdmabuf_v1_interface.cpp
     output_interface.cpp
     outputchangeset.cpp
     outputconfiguration_interface.cpp
@@ -45,6 +47,7 @@ set(SERVER_LIB_SRCS
     primaryselectionsource_v1_interface.cpp
     region_interface.cpp
     relativepointer_v1_interface.cpp
+    rendererinterface.cpp
     resource.cpp
     screencast_v1_interface.cpp
     seat_interface.cpp
@@ -215,18 +218,8 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
 )
 
 ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
-    PROTOCOL ${PLASMA_WAYLAND_PROTOCOLS_DIR}/wayland-eglstream-controller.xml
-    BASENAME wl-eglstream-controller
-)
-
-ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     PROTOCOL ${PLASMA_WAYLAND_PROTOCOLS_DIR}/keystate.xml
     BASENAME keystate
-)
-
-ecm_add_wayland_server_protocol(SERVER_LIB_SRCS
-    PROTOCOL ${WaylandProtocols_DATADIR}/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml
-    BASENAME linux-dmabuf-unstable-v1
 )
 
 ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
@@ -292,8 +285,10 @@ target_link_libraries(KWaylandServer
         Qt::Gui
         Wayland::Server
     PRIVATE
+        KF5::CoreAddons
         EGL::EGL
         Qt::Concurrent
+        epoxy::epoxy
 )
 
 target_compile_definitions(KWaylandServer PRIVATE
@@ -313,7 +308,7 @@ set(SERVER_LIB_HEADERS
   abstract_data_source.h
   appmenu_interface.h
   blur_interface.h
-  buffer_interface.h
+  clientbufferref.h
   clientconnection.h
   compositor_interface.h
   contrast_interface.h
@@ -327,7 +322,6 @@ set(SERVER_LIB_HEADERS
   datasource_interface.h
   display.h
   dpms_interface.h
-  eglstream_controller_interface.h
   fakeinput_interface.h
   filtered_display.h
   global.h
@@ -338,7 +332,6 @@ set(SERVER_LIB_HEADERS
   keyboard_shortcuts_inhibit_v1_interface.h
   keystate_interface.h
   layershell_v1_interface.h
-  linuxdmabuf_v1_interface.h
   output_interface.h
   outputchangeset.h
   outputconfiguration_interface.h
@@ -353,6 +346,7 @@ set(SERVER_LIB_HEADERS
   primaryselectiondevicemanager_v1_interface.h
   region_interface.h
   relativepointer_v1_interface.h
+  rendererinterface.h
   resource.h
   screencast_v1_interface.h
   seat_interface.h
@@ -380,6 +374,24 @@ install(FILES
   DESTINATION ${KDE_INSTALL_INCLUDEDIR}/KWaylandServer COMPONENT Devel
 )
 
+install(
+    FILES
+        clientbuffer_p.h
+        clientbufferintegration_p.h
+        clientbufferintegrationfactory_p.h
+        clientbuffermanager_p.h
+        display_p.h
+        rendererinterface_p.h
+
+    DESTINATION
+        ${KDE_INSTALL_INCLUDEDIR}/KWaylandServer/private
+
+    COMPONENT
+        Devel
+)
+
 # make available to ecm_add_qch in parent folder
 set(KWaylandServer_APIDOX_SRCS ${SERVER_LIB_HEADERS} PARENT_SCOPE)
 set(KWaylandServer_APIDOX_BUILD_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
+
+add_subdirectory(plugins)

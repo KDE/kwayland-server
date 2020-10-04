@@ -12,7 +12,6 @@
 #include "KWayland/Client/surface.h"
 #include "KWayland/Client/registry.h"
 #include "KWayland/Client/shm_pool.h"
-#include "../../src/server/buffer_interface.h"
 #include "../../src/server/compositor_interface.h"
 #include "../../src/server/display.h"
 #include "../../src/server/surface_interface.h"
@@ -81,9 +80,6 @@ void TestShmPool::init()
     registry.create(m_connection->display());
     QVERIFY(registry.isValid());
     registry.setup();
-
-    // here we need a shm pool
-    m_display->createShm();
 
     QVERIFY(shmSpy.wait());
     m_shmPool = registry.createShmPool(shmSpy.first().first().value<quint32>(), shmSpy.first().last().value<quint32>(), this);

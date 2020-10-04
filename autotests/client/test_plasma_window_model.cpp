@@ -99,7 +99,6 @@ void PlasmaWindowModelTest::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
     m_pwInterface = new PlasmaWindowManagementInterface(m_display, m_display);
     m_plasmaVirtualDesktopManagementInterface = new PlasmaVirtualDesktopManagementInterface(m_display, m_display);
     m_plasmaVirtualDesktopManagementInterface->createDesktop("desktop1");

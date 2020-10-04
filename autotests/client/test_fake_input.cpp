@@ -60,7 +60,6 @@ void FakeInputTest::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
     m_fakeInputInterface = new FakeInputInterface(m_display);
     QSignalSpy deviceCreatedSpy(m_fakeInputInterface, &FakeInputInterface::deviceCreated);
     QVERIFY(deviceCreatedSpy.isValid());

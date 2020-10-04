@@ -8,9 +8,11 @@
 #define WAYLAND_SERVER_SURFACE_INTERFACE_P_H
 
 #include "surface_interface.h"
+#include "clientbufferref.h"
 #include "utils.h"
 // Qt
 #include <QHash>
+#include <QQueue>
 #include <QVector>
 // Wayland
 #include "qwayland-server-wayland.h"
@@ -21,6 +23,23 @@ namespace KWaylandServer
 class IdleInhibitorV1Interface;
 class SurfaceRole;
 class ViewportInterface;
+
+class DamageJournal
+{
+public:
+    DamageJournal();
+
+    void add(const QRegion &region);
+    QRegion query(quint64 cursor) const;
+
+    quint64 handle() const;
+    quint64 cursor() const;
+
+private:
+    QQueue<QRegion> m_queue;
+    quint64 m_handle = 0;
+    quint64 m_cursor = 0;
+};
 
 class KWaylandFrameCallback : public QtWaylandServer::wl_callback
 {
@@ -62,13 +81,13 @@ public:
         OutputInterface::Transform bufferTransform = OutputInterface::Transform::Normal;
         QList<KWaylandFrameCallback *> frameCallbacks;
         QPoint offset = QPoint();
-        BufferInterface *buffer = nullptr;
         // stacking order: bottom (first) -> top (last)
         QList<SubSurfaceInterface *> children;
         QPointer<ShadowInterface> shadow;
         QPointer<BlurInterface> blur;
         QPointer<ContrastInterface> contrast;
         QPointer<SlideInterface> slide;
+        QPointer<ClientBuffer> buffer;
     };
 
     static SurfaceInterfacePrivate *get(SurfaceInterface *surface) { return surface->d.data(); }
@@ -96,15 +115,16 @@ public:
     SurfaceInterface *q;
     SurfaceRole *role = nullptr;
 
+    ClientBufferRef bufferRef;
     State current;
     State pending;
     State cached;
     SubSurfaceInterface *subSurface = nullptr;
-    QRegion trackedDamage;
     QMatrix4x4 surfaceToBufferMatrix;
     QMatrix4x4 bufferToSurfaceMatrix;
     QSize bufferSize;
     QRegion inputRegion;
+    DamageJournal damageHistory;
 
     // workaround for https://bugreports.qt.io/browse/QTBUG-52192
     // A subsurface needs to be considered mapped even if it doesn't have a buffer attached

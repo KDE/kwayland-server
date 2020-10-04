@@ -53,7 +53,6 @@ void ErrorTest::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
     m_ci = new CompositorInterface(m_display, m_display);
     m_psi = new PlasmaShellInterface(m_display, m_display);
 

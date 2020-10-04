@@ -15,7 +15,7 @@
 #include "KWayland/Client/subcompositor.h"
 #include "KWayland/Client/subsurface.h"
 #include "KWayland/Client/surface.h"
-#include "../../src/server/buffer_interface.h"
+#include "../../src/server/clientbufferref.h"
 #include "../../src/server/display.h"
 #include "../../src/server/compositor_interface.h"
 #include "../../src/server/subcompositor_interface.h"
@@ -87,7 +87,6 @@ void TestSubSurface::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
 
     // setup connection
     m_connection = new KWayland::Client::ConnectionThread;
@@ -638,8 +637,8 @@ void TestSubSurface::testSyncMode()
     QVERIFY(childDamagedSpy.wait());
     QCOMPARE(childDamagedSpy.count(), 1);
     QCOMPARE(subSurfaceTreeChangedSpy.count(), 2);
-    QCOMPARE(childSurface->buffer()->data(), image);
-    QCOMPARE(parentSurface->buffer()->data(), image2);
+    QCOMPARE(childSurface->buffer().toImage(), image);
+    QCOMPARE(parentSurface->buffer().toImage(), image2);
     QVERIFY(childSurface->isMapped());
     QVERIFY(parentSurface->isMapped());
 
@@ -694,7 +693,7 @@ void TestSubSurface::testDeSyncMode()
     subSurface->setMode(SubSurface::Mode::Desynchronized);
     QVERIFY(childDamagedSpy.wait());
     QCOMPARE(subSurfaceTreeChangedSpy.count(), 2);
-    QCOMPARE(childSurface->buffer()->data(), image);
+    QCOMPARE(childSurface->buffer().toImage(), image);
     QVERIFY(!childSurface->isMapped());
     QVERIFY(!parentSurface->isMapped());
 
@@ -705,7 +704,7 @@ void TestSubSurface::testDeSyncMode()
     surface->commit(Surface::CommitFlag::None);
     QVERIFY(childDamagedSpy.wait());
     QCOMPARE(subSurfaceTreeChangedSpy.count(), 3);
-    QCOMPARE(childSurface->buffer()->data(), image);
+    QCOMPARE(childSurface->buffer().toImage(), image);
 }
 
 

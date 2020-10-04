@@ -14,7 +14,7 @@
 #include "KWayland/Client/shm_pool.h"
 #include "KWayland/Client/surface.h"
 // server
-#include "../../src/server/buffer_interface.h"
+#include "../../src/server/clientbufferref.h"
 #include "../../src/server/display.h"
 #include "../../src/server/compositor_interface.h"
 #include "../../src/server/shadow_interface.h"
@@ -55,7 +55,6 @@ void ShadowTest::init()
     m_display->addSocketName(s_socketName);
     m_display->start();
     QVERIFY(m_display->isRunning());
-    m_display->createShm();
     m_compositorInterface = new CompositorInterface(m_display, m_display);
     m_shadowInterface = new ShadowManagerInterface(m_display, m_display);
 
@@ -222,35 +221,32 @@ void ShadowTest::testShadowElements()
     auto serverShadow = serverSurface->shadow();
     QVERIFY(serverShadow);
     QCOMPARE(serverShadow->offset(), QMarginsF(1, 2, 3, 4));
-    QCOMPARE(serverShadow->topLeft()->data(), topLeftImage);
-    QCOMPARE(serverShadow->top()->data(), topImage);
-    QCOMPARE(serverShadow->topRight()->data(), topRightImage);
-    QCOMPARE(serverShadow->right()->data(), rightImage);
-    QCOMPARE(serverShadow->bottomRight()->data(), bottomRightImage);
-    QCOMPARE(serverShadow->bottom()->data(), bottomImage);
-    QCOMPARE(serverShadow->bottomLeft()->data(), bottomLeftImage);
-    QCOMPARE(serverShadow->left()->data(), leftImage);
+    QCOMPARE(serverShadow->topLeft().toImage(), topLeftImage);
+    QCOMPARE(serverShadow->top().toImage(), topImage);
+    QCOMPARE(serverShadow->topRight().toImage(), topRightImage);
+    QCOMPARE(serverShadow->right().toImage(), rightImage);
+    QCOMPARE(serverShadow->bottomRight().toImage(), bottomRightImage);
+    QCOMPARE(serverShadow->bottom().toImage(), bottomImage);
+    QCOMPARE(serverShadow->bottomLeft().toImage(), bottomLeftImage);
+    QCOMPARE(serverShadow->left().toImage(), leftImage);
 
     // try to destroy the buffer
     // first attach one buffer
     shadow->attachTopLeft(m_shm->createBuffer(topLeftImage));
     // create a destroyed signal
-    QSignalSpy destroyedSpy(serverShadow->topLeft(), &BufferInterface::aboutToBeDestroyed);
-    QVERIFY(destroyedSpy.isValid());
     delete m_shm;
     m_shm = nullptr;
-    QVERIFY(destroyedSpy.wait());
 
     // now all buffers should be gone
     // TODO: does that need a signal?
-    QVERIFY(!serverShadow->topLeft());
-    QVERIFY(!serverShadow->top());
-    QVERIFY(!serverShadow->topRight());
-    QVERIFY(!serverShadow->right());
-    QVERIFY(!serverShadow->bottomRight());
-    QVERIFY(!serverShadow->bottom());
-    QVERIFY(!serverShadow->bottomLeft());
-    QVERIFY(!serverShadow->left());
+    QTRY_VERIFY(serverShadow->topLeft().isDestroyed());
+    QTRY_VERIFY(serverShadow->top().isDestroyed());
+    QTRY_VERIFY(serverShadow->topRight().isDestroyed());
+    QTRY_VERIFY(serverShadow->right().isDestroyed());
+    QTRY_VERIFY(serverShadow->bottomRight().isDestroyed());
+    QTRY_VERIFY(serverShadow->bottom().isDestroyed());
+    QTRY_VERIFY(serverShadow->bottomLeft().isDestroyed());
+    QTRY_VERIFY(serverShadow->left().isDestroyed());
 }
 
 void ShadowTest::testSurfaceDestroy()

@@ -40,7 +40,7 @@ ecm_setup_version(PROJECT VARIABLE_PREFIX KWAYLANDSERVER
 
 # Dependencies
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED Concurrent Gui WaylandClient)
-find_package(KF5Wayland ${KF5_MIN_VERSION} CONFIG REQUIRED)
+find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS CoreAddons Wayland)
 find_package(PlasmaWaylandProtocols CONFIG REQUIRED)
 
 find_package(QtWaylandScanner REQUIRED)
@@ -54,6 +54,14 @@ find_package(WaylandScanner)
 
 find_package(WaylandProtocols 1.19)
 set_package_properties(WaylandProtocols PROPERTIES TYPE REQUIRED)
+
+find_package(epoxy)
+set_package_properties(epoxy PROPERTIES
+    DESCRIPTION "libepoxy"
+    URL "https://github.com/anholt/libepoxy"
+    TYPE REQUIRED
+    PURPOSE "OpenGL dispatch library"
+)
 
 find_package(EGL)
 set_package_properties(EGL PROPERTIES TYPE REQUIRED)

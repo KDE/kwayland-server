@@ -65,8 +65,6 @@ void TestPlasmaShell::init()
     QVERIFY(m_display->isRunning());
 
     m_compositorInterface = new CompositorInterface(m_display, m_display);
-    m_display->createShm();
-
     m_plasmaShellInterface = new PlasmaShellInterface(m_display, m_display);
 
     // setup connection

@@ -74,7 +74,6 @@ int main(int argc, char **argv)
     // first create the Server and setup with minimum to get an XWayland connected
     Display display;
     display.start();
-    display.createShm();
     new CompositorInterface(&display, &display);
     new XdgShellInterface(&display, &display);
     OutputInterface *output = new OutputInterface(&display, &display);

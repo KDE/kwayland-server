@@ -3,7 +3,7 @@
 
     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
 */
-#include "../src/server/buffer_interface.h"
+#include "../src/server/clientbufferref.h"
 #include "../src/server/compositor_interface.h"
 #include "../src/server/datadevicemanager_interface.h"
 #include "../src/server/display.h"
@@ -154,8 +154,8 @@ void CompositorWindow::paintEvent(QPaintEvent *event)
         if (!surface || !surface->isMapped()) {
             continue;
         }
-        KWaylandServer::BufferInterface *buffer = surface->buffer();
-        p.drawImage(QPoint(0, 0), buffer->data());
+        KWaylandServer::ClientBufferRef buffer = surface->buffer();
+        p.drawImage(QPoint(0, 0), buffer.toImage());
         surface->frameRendered(QDateTime::currentMSecsSinceEpoch());
     }
 }
@@ -242,7 +242,6 @@ int main(int argc, char **argv)
     new DataDeviceManagerInterface(&display);
     new CompositorInterface(&display, &display);
     XdgShellInterface *shell = new XdgShellInterface(&display);
-    display.createShm();
     OutputInterface *output = new OutputInterface(&display, &display);
     output->setPhysicalSize(QSize(269, 202));
     const QSize windowSize(1024, 768);
