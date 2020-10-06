@@ -106,8 +106,6 @@ private:
     CompositorInterface *m_serverCompositor;
     TextInputV3Interface *m_serverTextInputV3;
     TextInputManagerV3 *m_clientTextInputManagerV3;
-
-    quint32 m_totalCommits = 0;
 };
 
 static const QString s_socketName = QStringLiteral("kwin-wayland-server-text-input-v3-test-0");
@@ -240,7 +238,6 @@ void TestTextInputV3Interface::testEnableDisable()
     // after we do commit we should get event
     m_clientTextInputV3->commit();
     QVERIFY(textInputEnabledSpy.wait());
-    m_totalCommits++;
 
     QCOMPARE(textInputEnabledSpy.count(), 1);
     QCOMPARE(cursorRectangleChangedSpy.count(), 1);
@@ -257,7 +254,6 @@ void TestTextInputV3Interface::testEnableDisable()
     m_clientTextInputV3->commit();
     QVERIFY(textInputEnabledSpy.wait());
     QCOMPARE(textInputEnabledSpy.count(), 2);
-    m_totalCommits++;
 
     // Lets try leaving the surface and make sure event propogage
     m_seat->setFocusedTextInputSurface(nullptr);
@@ -294,7 +290,6 @@ void TestTextInputV3Interface::testEvents()
     // Now enable the textInput
     m_clientTextInputV3->enable();
     m_clientTextInputV3->commit();
-    m_totalCommits++;
     QVERIFY(textInputEnabledSpy.wait());
 
     QSignalSpy preEditSpy(m_clientTextInputV3, &TextInputV3::preedit_string);
@@ -321,12 +316,11 @@ void TestTextInputV3Interface::testEvents()
     QCOMPARE(deleteSurroundingSpy.last().at(1).value<quint32>(), 10);
 
     // zwp_text_input_v3.done event have serial of total commits
-    QCOMPARE(doneSpy.last().at(0).value<quint32>(), m_totalCommits);
+    QCOMPARE(doneSpy.last().at(0).value<quint32>(), 1);
 
     // Now disable the textInput
     m_clientTextInputV3->disable();
     m_clientTextInputV3->commit();
-    m_totalCommits++;
     QVERIFY(textInputEnabledSpy.wait());
 }
 
@@ -380,7 +374,6 @@ void TestTextInputV3Interface::testContentPurpose()
     m_clientTextInputV3->enable();
     m_clientTextInputV3->commit();
     QVERIFY(textInputEnabledSpy.wait());
-    m_totalCommits++;
 
     // Default should be normal content purpose
     QCOMPARE(m_serverTextInputV3->contentPurpose(), TextInputContentPurpose::Normal);
@@ -394,27 +387,23 @@ void TestTextInputV3Interface::testContentPurpose()
     m_clientTextInputV3->commit();
     QVERIFY(contentTypeChangedSpy.wait());
     QTEST(m_serverTextInputV3->contentPurpose(), "serverPurpose");
-    m_totalCommits++;
 
     // Setting same thing should not trigger update
     m_clientTextInputV3->enable();
     m_clientTextInputV3->set_content_type(QtWayland::zwp_text_input_v3::content_hint_none, clientPurpose);
     m_clientTextInputV3->commit();
     QVERIFY(!contentTypeChangedSpy.wait(100));
-    m_totalCommits++;
 
     // unset to normal
     m_clientTextInputV3->enable();
     m_clientTextInputV3->set_content_type(QtWayland::zwp_text_input_v3::content_hint_none, QtWayland::zwp_text_input_v3::content_purpose_normal);
     m_clientTextInputV3->commit();
     QVERIFY(contentTypeChangedSpy.wait());
-    m_totalCommits++;
     QCOMPARE(m_serverTextInputV3->contentPurpose(), TextInputContentPurpose::Normal);
 
     // Now disable the textInput
     m_clientTextInputV3->disable();
     m_clientTextInputV3->commit();
-    m_totalCommits++;
     QVERIFY(textInputEnabledSpy.wait());
 }
 
@@ -467,7 +456,6 @@ void TestTextInputV3Interface::testContentHints()
     m_clientTextInputV3->enable();
     m_clientTextInputV3->commit();
     QVERIFY(textInputEnabledSpy.wait());
-    m_totalCommits++;
 
     QCOMPARE(m_serverTextInputV3->contentHints(), TextInputContentHint::None);
 
@@ -475,7 +463,6 @@ void TestTextInputV3Interface::testContentHints()
     m_clientTextInputV3->disable();
     m_clientTextInputV3->commit();
     QVERIFY(textInputEnabledSpy.wait());
-    m_totalCommits++;
 
     QSignalSpy contentTypeChangedSpy(m_serverTextInputV3, &TextInputV3Interface::contentTypeChanged);
     QVERIFY(contentTypeChangedSpy.isValid());
@@ -486,27 +473,23 @@ void TestTextInputV3Interface::testContentHints()
     m_clientTextInputV3->commit();
     QVERIFY(contentTypeChangedSpy.wait());
     QTEST(m_serverTextInputV3->contentHints(), "serverHints");
-    m_totalCommits++;
 
     // Setting same thing should not trigger update
     m_clientTextInputV3->enable();
     m_clientTextInputV3->set_content_type(clientHint, QtWayland::zwp_text_input_v3::content_purpose_normal);
     m_clientTextInputV3->commit();
     QVERIFY(!contentTypeChangedSpy.wait(100));
-    m_totalCommits++;
 
     // unset to normal
     m_clientTextInputV3->enable();
     m_clientTextInputV3->set_content_type(QtWayland::zwp_text_input_v3::content_hint_none, QtWayland::zwp_text_input_v3::content_purpose_normal);
     m_clientTextInputV3->commit();
     QVERIFY(contentTypeChangedSpy.wait());
-    m_totalCommits++;
 
     // Now disable the textInput
     m_clientTextInputV3->disable();
     m_clientTextInputV3->commit();
     QVERIFY(textInputEnabledSpy.wait());
-    m_totalCommits++;
 }
 
 QTEST_GUILESS_MAIN(TestTextInputV3Interface)

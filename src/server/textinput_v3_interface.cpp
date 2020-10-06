@@ -156,6 +156,7 @@ void TextInputV3InterfacePrivate::sendLeave(SurfaceInterface *s)
     if (!s) {
         return;
     }
+    serial = 0;
     surface.clear();
     const auto clientResources = textInputsForClient(s->client());
     for (auto resource : clientResources) {
