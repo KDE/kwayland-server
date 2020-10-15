@@ -105,6 +105,10 @@ void KeyboardInterface::setKeymap(const QByteArray &content)
     d->keymap.swap(tmp);
 }
 
+void KeyboardInterfacePrivate::keyboardGrabbed(wl_client *client)
+{
+}
+
 void KeyboardInterfacePrivate::sendKeymap(int fd, quint32 size)
 {
     const QList<Resource *> keyboards = resourceMap().values();
@@ -186,6 +190,7 @@ QVector<quint32> KeyboardInterfacePrivate::pressedKeys() const
 
 void KeyboardInterface::keyPressed(quint32 key)
 {
+    const quint32 serial = d->seat->d_func()->nextSerial();
     if (!d->focusedSurface) {
         return;
     }
@@ -195,7 +200,6 @@ void KeyboardInterface::keyPressed(quint32 key)
     }
 
     const QList<KeyboardInterfacePrivate::Resource *> keyboards = d->keyboardsForClient(d->focusedSurface->client());
-    const quint32 serial = d->seat->d_func()->nextSerial();
     for (KeyboardInterfacePrivate::Resource *keyboardResource : keyboards) {
         d->send_key(keyboardResource->handle, serial, d->seat->timestamp(), key, KeyboardInterfacePrivate::key_state::key_state_pressed);
     }
@@ -203,6 +207,7 @@ void KeyboardInterface::keyPressed(quint32 key)
 
 void KeyboardInterface::keyReleased(quint32 key)
 {
+    const quint32 serial = d->seat->d_func()->nextSerial();
     if (!d->focusedSurface) {
         return;
     }
@@ -212,7 +217,6 @@ void KeyboardInterface::keyReleased(quint32 key)
     }
 
     const QList<KeyboardInterfacePrivate::Resource *> keyboards = d->keyboardsForClient(d->focusedSurface->client());
-    const quint32 serial = d->seat->d_func()->nextSerial();
     for (KeyboardInterfacePrivate::Resource *keyboardResource : keyboards) {
         d->send_key(keyboardResource->handle, serial, d->seat->timestamp(), key, KeyboardInterfacePrivate::key_state::key_state_released);
     }

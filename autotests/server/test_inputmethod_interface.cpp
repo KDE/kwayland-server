@@ -177,6 +177,7 @@ void TestInputMethodInterface::initTestCase()
     QVERIFY(m_display.isRunning());
 
     m_seat = m_display.createSeat(this);
+    m_seat->setHasKeyboard(true);
     m_seat->create();
     m_serverCompositor = m_display.createCompositor(this);
     m_inputMethodIface = m_display.createInputMethodInterface(this);
@@ -456,13 +457,11 @@ void TestInputMethodInterface::testGrabkeyboard()
     QSignalSpy keyEventSpy(serverContext, &KWaylandServer::InputMethodContextV1Interface::key);
     QVERIFY(keyEventSpy.isValid());
     imContext->key(0, 123, 56, 1);
-    QEXPECT_FAIL("", "We should be not get key event if keyboard is not grabbed", Continue);
     QVERIFY(!keyEventSpy.wait(200));
 
     QSignalSpy modifierEventSpy(serverContext, &KWaylandServer::InputMethodContextV1Interface::modifiers);
     QVERIFY(modifierEventSpy.isValid());
     imContext->modifiers(1234, 0, 0, 0, 0);
-    QEXPECT_FAIL("", "We should be not get modifiers event if keyboard is not grabbed", Continue);
     QVERIFY(!modifierEventSpy.wait(200));
 
     // grab the keyboard

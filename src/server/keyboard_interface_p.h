@@ -36,6 +36,8 @@ public:
 
     static KeyboardInterfacePrivate *get(KeyboardInterface *keyboard) { return keyboard->d.data(); }
 
+    void keyboardGrabbed(wl_client *client);
+
     SeatInterface *seat;
     SurfaceInterface *focusedSurface = nullptr;
     QPointer<SurfaceInterface> focusedChildSurface;
@@ -63,6 +65,7 @@ public:
     QHash<quint32, State> states;
     bool updateKey(quint32 key, State state);
     QVector<quint32> pressedKeys() const;
+    wl_client *grabClient;
 
 protected:
     void keyboard_bind_resource(Resource *resource) override;

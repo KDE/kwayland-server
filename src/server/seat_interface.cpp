@@ -547,6 +547,20 @@ void SeatInterface::Private::getKeyboard(wl_client *client, wl_resource *resourc
     emit q->keyboardCreated(keyboard.data());
 }
 
+void SeatInterface::Private::grabKeyboard(wl_client *client, wl_resource *resource, uint32_t id)
+{
+    if (!keyboard) {
+        qCWarning(KWAYLAND_SERVER) << "Trying to grab keyboard on seat without keyboard capability.";
+        wl_resource_post_no_memory(resource);
+        return;
+    }
+    if (!grabKeyboardInterface) {
+        grabKeyboardInterface.reset(new KeyboardInterface(q));
+    }
+    grabKeyboardInterface->d->add(client, id, wl_resource_get_version(resource));
+    grabKeyboardInterface->d->keyboardGrabbed(client);
+}
+
 void SeatInterface::Private::getTouchCallback(wl_client *client, wl_resource *resource, uint32_t id)
 {
     cast(resource)->getTouch(client, resource, id);
@@ -1157,6 +1171,12 @@ KeyboardInterface *SeatInterface::keyboard() const
 {
     Q_D();
     return d->keyboard.data();
+}
+
+KeyboardInterface *SeatInterface::grabbedKeyboard() const
+{
+    Q_D();
+    return d->grabKeyboardInterface.data();
 }
 
 void SeatInterface::cancelTouchSequence()

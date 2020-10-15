@@ -91,7 +91,7 @@ Q_SIGNALS:
 private:
     friend class InputMethodV1Interface;
     friend class InputMethodV1InterfacePrivate;
-    InputMethodContextV1Interface(InputMethodV1Interface *parent);
+    InputMethodContextV1Interface(Display *display, InputMethodV1Interface *parent);
     QScopedPointer<InputMethodContextV1InterfacePrivate> d;
 };
 

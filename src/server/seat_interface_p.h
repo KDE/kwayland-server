@@ -51,6 +51,7 @@ public:
     quint32 timestamp = 0;
     QVector<PointerInterface*> pointers;
     QScopedPointer<KeyboardInterface> keyboard;
+    QScopedPointer<KeyboardInterface> grabKeyboardInterface;
     QVector<TouchInterface*> touchs;
     QVector<DataDeviceInterface*> dataDevices;
     QVector<PrimarySelectionDeviceV1Interface*> primarySelectionDevices;
@@ -144,6 +145,7 @@ public:
 private:
     void getPointer(wl_client *client, wl_resource *resource, uint32_t id);
     void getKeyboard(wl_client *client, wl_resource *resource, uint32_t id);
+    void grabKeyboard(wl_client *client, wl_resource *resource, uint32_t id);
     void getTouch(wl_client *client, wl_resource *resource, uint32_t id);
     void updateSelection(DataDeviceInterface *dataDevice);
     void updatePrimarySelection(PrimarySelectionDeviceV1Interface *primarySelectionDevice);
@@ -161,6 +163,7 @@ private:
     static const qint32 s_touchVersion;
     static const qint32 s_keyboardVersion;
 
+    friend class InputMethodContextV1InterfacePrivate;
     SeatInterface *q;
 };
 

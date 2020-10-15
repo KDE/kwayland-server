@@ -10,6 +10,7 @@
 #include "surface_interface.h"
 #include "output_interface.h"
 #include "surfacerole_p.h"
+#include "seat_interface_p.h"
 
 #include <QHash>
 
@@ -24,9 +25,10 @@ static int s_version = 1;
 class InputMethodContextV1InterfacePrivate : public QtWaylandServer::zwp_input_method_context_v1
 {
 public:
-    InputMethodContextV1InterfacePrivate(InputMethodContextV1Interface *q)
+    InputMethodContextV1InterfacePrivate(Display *display, InputMethodContextV1Interface *q)
         : zwp_input_method_context_v1()
         , q(q)
+        , display(display)
     {
     }
 
@@ -80,17 +82,37 @@ public:
     {
         Q_EMIT q->keysym(serial, time, sym, state == WL_KEYBOARD_KEY_STATE_PRESSED, toQtModifiers(modifiers));
     }
-    void zwp_input_method_context_v1_grab_keyboard(Resource *, uint32_t keyboard) override
+    void zwp_input_method_context_v1_grab_keyboard(Resource *resource, uint32_t id) override
     {
-        Q_EMIT q->grabKeyboard(keyboard);
+        for (auto seat : display->seats()) {
+            seat->d_func()->grabKeyboard(resource->client(), resource->handle, id);
+        }
+        keyboardGrabbed = true;
+        Q_EMIT q->grabKeyboard(id);
     }
     void zwp_input_method_context_v1_key(Resource *, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) override
     {
-        Q_EMIT q->key(serial, time, key, state == WL_KEYBOARD_KEY_STATE_PRESSED);
+        Q_UNUSED(serial)
+        Q_UNUSED(time)
+        if (!keyboardGrabbed) {
+            return;
+        }
+        /*
+        for (auto seat : display->seats()) {
+            if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+                seat->keyboard()->keyPressedDirect(key);
+            } else {
+                seat->keyboard()->keyReleasedDirect(key);
+            }
+        }
+        */
     }
     void zwp_input_method_context_v1_modifiers(Resource *, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) override
     {
-        Q_EMIT q->modifiers(serial, mods_depressed, mods_latched, mods_locked, group);
+        Q_UNUSED(serial)
+        if (!keyboardGrabbed) {
+            return;
+        }
     }
     void zwp_input_method_context_v1_language(Resource *, uint32_t serial, const QString &language) override
     {
@@ -141,12 +163,14 @@ public:
 
 private:
     InputMethodContextV1Interface *const q;
+    Display *display;
     QVector<Qt::KeyboardModifiers> mods;
+    bool keyboardGrabbed = false;
 };
 
-InputMethodContextV1Interface::InputMethodContextV1Interface(InputMethodV1Interface *parent)
+InputMethodContextV1Interface::InputMethodContextV1Interface(Display *display, InputMethodV1Interface *parent)
     : QObject(parent)
-    , d(new InputMethodContextV1InterfacePrivate(this))
+    , d(new InputMethodContextV1InterfacePrivate(display, this))
 {
 }
 
@@ -387,9 +411,9 @@ public:
     bool m_enabled = false;
 };
 
-InputMethodV1Interface::InputMethodV1Interface(Display *d, QObject *parent)
+InputMethodV1Interface::InputMethodV1Interface(Display *display, QObject *parent)
     : QObject(parent)
-    , d(new InputMethodV1InterfacePrivate(d, this))
+    , d(new InputMethodV1InterfacePrivate(display, this))
 {
 }
 
@@ -402,7 +426,7 @@ void InputMethodV1Interface::sendActivate()
     }
 
     Q_ASSERT(!d->m_context);
-    d->m_context = new InputMethodContextV1Interface(this);
+    d->m_context = new InputMethodContextV1Interface(d->m_display, this);
 
     d->m_enabled = true;
     for (auto resource : d->resourceMap()) {

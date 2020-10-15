@@ -62,8 +62,10 @@ public:
 
 private:
     void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
+
     friend class SeatInterface;
     friend class KeyboardInterfacePrivate;
+    friend class InputMethodContextV1InterfacePrivate;
     explicit KeyboardInterface(SeatInterface *seat);
 
     QScopedPointer<KeyboardInterfacePrivate> d;

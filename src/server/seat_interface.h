@@ -558,6 +558,11 @@ public:
     ///@}
 
     /**
+     * Grabbed keyboard interface
+     **/
+    KeyboardInterface *grabbedKeyboard() const;
+
+    /**
      * @name  touch related methods
      **/
     ///@{
@@ -718,6 +723,7 @@ private:
     friend class DataDeviceInterface;
     friend class PrimarySelectionDeviceV1Interface;
     friend class TextInputManagerV2InterfacePrivate;
+    friend class InputMethodContextV1InterfacePrivate;
     friend class KeyboardInterface;
     explicit SeatInterface(Display *display, QObject *parent);
 
