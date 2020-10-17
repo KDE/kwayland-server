@@ -18,6 +18,7 @@
 namespace KWaylandServer
 {
 
+class BlurV1Interface;
 class IdleInhibitorV1Interface;
 class SurfaceRole;
 class ViewportInterface;
@@ -52,7 +53,7 @@ public:
         bool opaqueIsSet = false;
         bool bufferIsSet = false;
         bool shadowIsSet = false;
-        bool blurIsSet = false;
+        bool blurRegionIsSet = false;
         bool contrastIsSet = false;
         bool slideIsSet = false;
         bool childrenChanged = false;
@@ -66,7 +67,7 @@ public:
         // stacking order: bottom (first) -> top (last)
         QList<QPointer<SubSurfaceInterface>> children;
         QPointer<ShadowInterface> shadow;
-        QPointer<BlurInterface> blur;
+        QRegion blurRegion;
         QPointer<ContrastInterface> contrast;
         QPointer<SlideInterface> slide;
     };
@@ -81,7 +82,6 @@ public:
     bool raiseChild(QPointer<SubSurfaceInterface> subsurface, SurfaceInterface *sibling);
     bool lowerChild(QPointer<SubSurfaceInterface> subsurface, SurfaceInterface *sibling);
     void setShadow(const QPointer<ShadowInterface> &shadow);
-    void setBlur(const QPointer<BlurInterface> &blur);
     void setContrast(const QPointer<ContrastInterface> &contrast);
     void setSlide(const QPointer<SlideInterface> &slide);
     void installPointerConstraint(LockedPointerInterface *lock);
@@ -120,6 +120,7 @@ public:
     QVector<IdleInhibitorV1Interface*> idleInhibitors;
     ViewportInterface *viewportExtension = nullptr;
     SurfaceInterface *dataProxy = nullptr;
+    BlurV1Interface *blurV1Extension = nullptr;
 
     static QList<SurfaceInterface *> surfaces;
 

@@ -112,17 +112,6 @@ add_test(NAME kwayland-testRegion COMMAND testRegion)
 ecm_mark_as_test(testRegion)
 
 ########################################################
-# Test Blur
-########################################################
-set( testBlur_SRCS
-        test_wayland_blur.cpp
-    )
-add_executable(testBlur ${testBlur_SRCS})
-target_link_libraries( testBlur Qt5::Test Qt5::Gui KF5::WaylandClient Plasma::KWaylandServer)
-add_test(NAME kwayland-testBlur COMMAND testBlur)
-ecm_mark_as_test(testBlur)
-
-########################################################
 # Test Contrast
 ########################################################
 set( testContrast_SRCS

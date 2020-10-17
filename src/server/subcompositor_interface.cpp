@@ -152,7 +152,7 @@ void SubSurfaceInterface::Private::create(ClientConnection *client, quint32 vers
     // copy current state to subSurfacePending state
     // it's the reference for all new pending state which needs to be committed
     surfacePrivate->cached = surfacePrivate->current;
-    surfacePrivate->cached.blurIsSet = false;
+    surfacePrivate->cached.blurRegionIsSet = false;
     surfacePrivate->cached.bufferIsSet = false;
     surfacePrivate->cached.childrenChanged = false;
     surfacePrivate->cached.contrastIsSet = false;

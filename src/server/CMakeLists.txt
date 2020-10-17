@@ -1,7 +1,7 @@
 set(SERVER_LIB_SRCS
     abstract_data_source.cpp
     appmenu_interface.cpp
-    blur_interface.cpp
+    blur_v1_interface.cpp
     buffer_interface.cpp
     clientconnection.cpp
     compositor_interface.cpp
@@ -130,11 +130,6 @@ ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
 ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
     PROTOCOL ${PLASMA_WAYLAND_PROTOCOLS_DIR}/dpms.xml
     BASENAME dpms
-)
-
-ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
-    PROTOCOL ${PLASMA_WAYLAND_PROTOCOLS_DIR}/blur.xml
-    BASENAME blur
 )
 
 ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
@@ -272,6 +267,11 @@ ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
     BASENAME input-method-unstable-v1
 )
 
+ecm_add_qtwayland_server_protocol(SERVER_LIB_SRCS
+    PROTOCOL ${PROJECT_SOURCE_DIR}/src/protocols/ext-blur-unstable-v1.xml
+    BASENAME ext-blur-unstable-v1
+)
+
 set(SERVER_GENERATED_SRCS
     ${CMAKE_CURRENT_BINARY_DIR}/wayland-blur-client-protocol.h
     ${CMAKE_CURRENT_BINARY_DIR}/wayland-blur-server-protocol.h
@@ -375,7 +375,7 @@ set(SERVER_LIB_HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/KWaylandServer/kwaylandserver_export.h
   abstract_data_source.h
   appmenu_interface.h
-  blur_interface.h
+  blur_v1_interface.h
   buffer_interface.h
   clientconnection.h
   compositor_interface.h

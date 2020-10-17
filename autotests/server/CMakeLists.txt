@@ -132,3 +132,15 @@ add_executable(testTextInputV3Interface test_textinputv3_interface.cpp ${TEXTINP
 target_link_libraries(testTextInputV3Interface Qt5::Test Plasma::KWaylandServer KF5::WaylandClient Wayland::Client)
 add_test(NAME kwayland-testTextInputV3Interface COMMAND testTextInputV3Interface)
 ecm_mark_as_test(testTextInputV3Interface)
+
+########################################################
+# Test BlurV1 Interface
+########################################################
+ecm_add_qtwayland_client_protocol(BLURV1_SRCS
+    PROTOCOL ${PROJECT_SOURCE_DIR}/src/protocols/ext-blur-unstable-v1.xml
+    BASENAME ext-blur-unstable-v1
+)
+add_executable(testBlurV1Interface test_blur_v1_interface.cpp ${BLURV1_SRCS})
+target_link_libraries(testBlurV1Interface Qt5::Test Plasma::KWaylandServer KF5::WaylandClient Wayland::Client)
+add_test(NAME kwayland-testBlurV1Interface COMMAND testBlurV1Interface)
+ecm_mark_as_test(testBlurV1Interface)

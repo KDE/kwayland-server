@@ -183,12 +183,6 @@ void SurfaceInterfacePrivate::setShadow(const QPointer<ShadowInterface> &shadow)
     pending.shadowIsSet = true;
 }
 
-void SurfaceInterfacePrivate::setBlur(const QPointer<BlurInterface> &blur)
-{
-    pending.blur = blur;
-    pending.blurIsSet = true;
-}
-
 void SurfaceInterfacePrivate::setSlide(const QPointer<SlideInterface> &slide)
 {
     pending.slide = slide;
@@ -513,7 +507,7 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
     const bool scaleFactorChanged = source->bufferScaleIsSet && (target->bufferScale != source->bufferScale);
     const bool transformChanged = source->bufferTransformIsSet && (target->bufferTransform != source->bufferTransform);
     const bool shadowChanged = source->shadowIsSet;
-    const bool blurChanged = source->blurIsSet;
+    const bool blurChanged = source->blurRegionIsSet;
     const bool contrastChanged = source->contrastIsSet;
     const bool slideChanged = source->slideIsSet;
     const bool childrenChanged = source->childrenChanged;
@@ -561,8 +555,8 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
         target->shadowIsSet = true;
     }
     if (blurChanged) {
-        target->blur = source->blur;
-        target->blurIsSet = true;
+        target->blurRegion = source->blurRegion;
+        target->blurRegionIsSet = true;
     }
     if (contrastChanged) {
         target->contrast = source->contrast;
@@ -682,7 +676,7 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
         emit q->shadowChanged();
     }
     if (blurChanged) {
-        emit q->blurChanged();
+        emit q->blurRegionChanged();
     }
     if (contrastChanged) {
         emit q->contrastChanged();
@@ -823,9 +817,9 @@ QPointer< ShadowInterface > SurfaceInterface::shadow() const
     return d->current.shadow;
 }
 
-QPointer< BlurInterface > SurfaceInterface::blur() const
+QRegion SurfaceInterface::blurRegion() const
 {
-    return d->current.blur;
+    return d->current.blurRegion;
 }
 
 QPointer< ContrastInterface > SurfaceInterface::contrast() const

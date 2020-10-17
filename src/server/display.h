@@ -49,7 +49,7 @@ class PlasmaWindowManagementInterface;
 class QtSurfaceExtensionInterface;
 class SeatInterface;
 class ShadowManagerInterface;
-class BlurManagerInterface;
+class BlurManagerV1Interface;
 class ContrastManagerInterface;
 class ServerSideDecorationManagerInterface;
 class SlideManagerInterface;
@@ -181,7 +181,7 @@ public:
     IdleInterface *createIdle(QObject *parent = nullptr);
     FakeInputInterface *createFakeInput(QObject *parent = nullptr);
     ShadowManagerInterface *createShadowManager(QObject *parent = nullptr);
-    BlurManagerInterface *createBlurManager(QObject *parent = nullptr);
+    BlurManagerV1Interface *createBlurManagerV1(QObject *parent = nullptr);
     ContrastManagerInterface *createContrastManager(QObject *parent = nullptr);
     SlideManagerInterface *createSlideManager(QObject *parent = nullptr);
     DpmsManagerInterface *createDpmsManager(QObject *parent = nullptr);

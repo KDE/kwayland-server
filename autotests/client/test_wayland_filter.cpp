@@ -12,11 +12,9 @@
 #include "KWayland/Client/region.h"
 #include "KWayland/Client/registry.h"
 #include "KWayland/Client/surface.h"
-#include "KWayland/Client/blur.h"
 #include "../../src/server/display.h"
 #include "../../src/server/compositor_interface.h"
 #include "../../src/server/region_interface.h"
-#include "../../src/server/blur_interface.h"
 #include "../../src/server/filtered_display.h"
 
 #include <wayland-server.h>
@@ -39,12 +37,11 @@ private Q_SLOTS:
 private:
     TestDisplay *m_display;
     KWaylandServer::CompositorInterface *m_compositorInterface;
-    KWaylandServer::BlurManagerInterface *m_blurManagerInterface;
 };
 
-static const QString s_socketName = QStringLiteral("kwayland-test-wayland-blur-0");
+static const QString s_socketName = QStringLiteral("kwayland-test-wayland-filter-0");
 
-//The following non-realistic class allows only clients in the m_allowedClients list to access the blur interface
+//The following non-realistic class allows only clients in the m_allowedClients list to access the compositor interface
 //all other interfaces are allowed
 class TestDisplay : public KWaylandServer::FilteredDisplay
 {
@@ -60,7 +57,7 @@ TestDisplay::TestDisplay(QObject *parent):
 
 bool TestDisplay::allowInterface(KWaylandServer::ClientConnection* client, const QByteArray& interfaceName)
 {
-    if (interfaceName == "org_kde_kwin_blur_manager") {
+    if (interfaceName == "wl_compositor") {
         return m_allowedClients.contains(*client);
     }
     return true;
@@ -82,7 +79,6 @@ void TestFilter::init()
     QVERIFY(m_display->isRunning());
 
     m_compositorInterface = m_display->createCompositor(m_display);
-    m_blurManagerInterface = m_display->createBlurManager(m_display);
 }
 
 void TestFilter::cleanup()
@@ -129,7 +125,6 @@ void TestFilter::testFilter()
     Registry registry;
     QSignalSpy registryDoneSpy(&registry, &Registry::interfacesAnnounced);
     QSignalSpy compositorSpy(&registry, &Registry::compositorAnnounced);
-    QSignalSpy blurSpy(&registry, &Registry::blurAnnounced);
 
     registry.setEventQueue(&queue);
     registry.create(connection->display());
@@ -137,8 +132,7 @@ void TestFilter::testFilter()
     registry.setup();
 
     QVERIFY(registryDoneSpy.wait());
-    QVERIFY(compositorSpy.count() == 1);
-    QVERIFY(blurSpy.count() == accessAllowed ? 1 : 0);
+    QVERIFY(compositorSpy.count() == accessAllowed ? 1 : 0);
 
     thread->quit();
     thread->wait();

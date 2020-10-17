@@ -6,7 +6,7 @@
 */
 #include "display.h"
 #include "appmenu_interface.h"
-#include "blur_interface.h"
+#include "blur_v1_interface.h"
 #include "compositor_interface.h"
 #include "contrast_interface.h"
 #include "datacontroldevicemanager_v1_interface.h"
@@ -302,9 +302,9 @@ ShadowManagerInterface *Display::createShadowManager(QObject *parent)
     return s;
 }
 
-BlurManagerInterface *Display::createBlurManager(QObject *parent)
+BlurManagerV1Interface *Display::createBlurManagerV1(QObject *parent)
 {
-    auto b = new BlurManagerInterface(this, parent);
+    auto b = new BlurManagerV1Interface(this, parent);
     connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
     return b;
 }

@@ -18,7 +18,6 @@
 
 namespace KWaylandServer
 {
-class BlurInterface;
 class BufferInterface;
 class ConfinedPointerInterface;
 class ContrastInterface;
@@ -49,7 +48,6 @@ class SurfaceInterfacePrivate;
  * @see CompositorInterface
  * @see BufferInterface
  * @see SubSurfaceInterface
- * @see BlurInterface
  * @see ContrastInterface
  * @see ShadowInterface
  * @see SlideInterface
@@ -218,7 +216,7 @@ public:
      * @returns The Blur for this Surface.
      * @since 5.5
      **/
-    QPointer<BlurInterface> blur() const;
+    QRegion blurRegion() const;
 
     /**
      * @returns The Slide for this Surface.
@@ -426,7 +424,7 @@ Q_SIGNALS:
     /**
      * @since 5.5
      **/
-    void blurChanged();
+    void blurRegionChanged();
     /**
      * @since 5.5
      **/
