@@ -24,6 +24,8 @@
 #include "surface_interface.h"
 #include "textinput_v2_interface_p.h"
 #include "textinput_v3_interface_p.h"
+#include "qwayland-server-xdg-shell.h"
+#include "grab.h"
 // Qt
 #include <QFile>
 // Wayland
@@ -52,6 +54,7 @@ SeatInterface::Private::Private(SeatInterface *q, Display *display)
 {
     textInputV2 = new TextInputV2Interface(q);
     textInputV3 = new TextInputV3Interface(q);
+    grabManager = new GrabManager(q);
 }
 
 #ifndef K_DOXYGEN
@@ -67,6 +70,7 @@ SeatInterface::SeatInterface(Display *display, QObject *parent)
     : Global(new Private(this, display), parent)
 {
     Q_D();
+
     connect(this, &SeatInterface::nameChanged, this,
         [d] {
             for (auto it = d->resources.constBegin(); it != d->resources.constEnd(); ++it) {
@@ -730,6 +734,7 @@ void SeatInterface::setFocusedPointerSurface(SurfaceInterface *surface, const QP
 void SeatInterface::setFocusedPointerSurface(SurfaceInterface *surface, const QMatrix4x4 &transformation)
 {
     Q_D();
+
     if (d->drag.mode == Private::Drag::Mode::Pointer) {
         // ignore
         return;
@@ -1111,6 +1116,7 @@ SurfaceInterface *SeatInterface::focusedKeyboardSurface() const
 void SeatInterface::setFocusedKeyboardSurface(SurfaceInterface *surface)
 {
     Q_D();
+
     if (!d->keyboard) {
         qCWarning(KWAYLAND_SERVER) << "Can not set focused keyboard surface without keyboard capability";
         return;
@@ -1221,6 +1227,7 @@ void SeatInterface::setFocusedTouchSurface(SurfaceInterface *surface, const QPoi
     }
     Q_ASSERT(!isDragTouch());
     Q_D();
+
     if (d->globalTouch.focus.surface) {
         disconnect(d->globalTouch.focus.destroyConnection);
     }
@@ -1417,6 +1424,13 @@ DataDeviceInterface *SeatInterface::dragSource() const
 {
     Q_D();
     return d->drag.source;
+}
+
+GrabManager* SeatInterface::grabManager() const
+{
+    Q_D();
+
+    return d->grabManager;
 }
 
 void SeatInterface::setFocusedTextInputSurface(SurfaceInterface *surface)

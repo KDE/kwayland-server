@@ -20,6 +20,7 @@ set(SERVER_LIB_SRCS
     fakeinput_interface.cpp
     filtered_display.cpp
     global.cpp
+    grab.cpp
     idle_interface.cpp
     idleinhibit_v1_interface
     inputmethod_v1_interface.cpp
@@ -331,6 +332,7 @@ set(SERVER_LIB_HEADERS
   fakeinput_interface.h
   filtered_display.h
   global.h
+  grab.h
   idle_interface.h
   idleinhibit_v1_interface.h
   inputmethod_v1_interface.h

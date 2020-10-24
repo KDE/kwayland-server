@@ -16,6 +16,7 @@ namespace KWaylandServer
 class SeatInterface;
 class SurfaceInterface;
 class KeyboardInterfacePrivate;
+class XdgPopupGrab;
 
 /**
  * @brief Resource for the wl_keyboard interface.
@@ -64,6 +65,7 @@ private:
     void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
     friend class SeatInterface;
     friend class KeyboardInterfacePrivate;
+    friend class XdgPopupGrab;
     explicit KeyboardInterface(SeatInterface *seat);
 
     QScopedPointer<KeyboardInterfacePrivate> d;

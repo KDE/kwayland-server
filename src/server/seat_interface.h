@@ -15,6 +15,9 @@
 #include "keyboard_interface.h"
 #include "pointer_interface.h"
 #include "touch_interface.h"
+#include "grab.h"
+
+#include <optional>
 
 struct wl_client;
 struct wl_resource;
@@ -28,6 +31,7 @@ class Display;
 class SurfaceInterface;
 class TextInputV2Interface;
 class TextInputV3Interface;
+class TextInputInterface;
 
 /**
  * Describes the source types for axis events. This indicates to the
@@ -554,8 +558,13 @@ public:
      * @see setFocusedTextInputSurface
      **/
     void setFocusedKeyboardSurface(SurfaceInterface *surface);
+
+    GrabManager* grabManager() const;
+
     SurfaceInterface *focusedKeyboardSurface() const;
     KeyboardInterface *keyboard() const;
+    KeyboardInterface *focusedKeyboard() const;
+    QVector<KeyboardInterface *> keyboardsForSurface(SurfaceInterface *surface) const;
     ///@}
 
     /**
@@ -722,6 +731,7 @@ private:
 
     class Private;
     Private *d_func() const;
+
 };
 
 }

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <KWaylandServer/kwaylandserver_export.h>
+#include "grab.h"
 
 #include <QObject>
 #include <QSharedDataPointer>
@@ -558,6 +559,26 @@ Q_SIGNALS:
 private:
     QScopedPointer<XdgPopupInterfacePrivate> d;
     friend class XdgPopupInterfacePrivate;
+};
+
+class KWAYLANDSERVER_EXPORT XdgPopupGrab : public KWaylandServer::Grab
+{
+    Q_OBJECT
+
+private:
+    QList<XdgPopupInterface*> m_grabStack;
+
+protected:
+    void popupDestroyed();
+
+public:
+    XdgPopupGrab(QObject *parent = nullptr);
+    ~XdgPopupGrab();
+    XdgPopupInterface* toplevelPopup();
+
+    void grabPopup(XdgPopupInterface* popup);
+    void ungrabPopup(XdgPopupInterface* popup);
+    void handleGrabChanged();
 };
 
 } // namespace KWaylandServer

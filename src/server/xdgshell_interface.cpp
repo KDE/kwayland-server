@@ -1063,4 +1063,68 @@ XdgPositioner::XdgPositioner(const QSharedDataPointer<XdgPositionerData> &data)
 {
 }
 
+XdgPopupGrab::XdgPopupGrab(QObject *parent) : Grab(parent) {}
+XdgPopupGrab::~XdgPopupGrab() {}
+
+XdgPopupInterface* XdgPopupGrab::toplevelPopup()
+{
+    return m_grabStack.last();
+}
+
+void XdgPopupGrab::handleGrabChanged()
+{
+    auto surf = m_grabStack.last();
+    if (surf) {
+        Q_EMIT wantedGrabChanged(OptionalSurface(surf->surface()), GrabKinds::Keyboard | GrabKinds::Pointer | GrabKinds::Touch);
+        return;
+    }
+    Q_EMIT wantedGrabChanged(OptionalSurface(), GrabKinds::None);
+}
+
+void XdgPopupGrab::popupDestroyed()
+{
+    // Use a reinterpret_cast instead of a qobject_cast because sender() is
+    // currently self-destructing. In this case it's safe because we only
+    // care about the numeric value of the pointer and the associated type
+    // and not any of the functionality of the type.
+    m_grabStack.removeAll(reinterpret_cast<XdgPopupInterface*>(sender()));
+    handleGrabChanged();
+}
+
+void XdgPopupGrab::grabPopup(XdgPopupInterface* popup)
+{
+    if (m_grabStack.length() == 0) {
+        // TODO:
+        // We're supposed to check for whether the popup's parent is a toplevel,
+        // but a bunch of design choices (both protocol and this codebase)
+        // compounded to where doing that is infeasible.
+        //
+        // Let's hope clients are well-behaved.
+        m_grabStack << popup;
+        handleGrabChanged();
+        connect(popup, &QObject::destroyed, this, &XdgPopupGrab::popupDestroyed);
+    } else {
+        if (m_grabStack.last()->surface() == popup->parentSurface()) {
+            m_grabStack << popup;
+            handleGrabChanged();
+            connect(popup, &QObject::destroyed, this, &XdgPopupGrab::popupDestroyed);
+        } else {
+            wl_resource_post_error(popup->surface()->resource(), xdg_popup_error::XDG_POPUP_ERROR_INVALID_GRAB, "cannot grab; parent popup does not have grab");
+            return;
+        }
+    }
+}
+
+void XdgPopupGrab::ungrabPopup(XdgPopupInterface* popup)
+{
+    if (!(m_grabStack.length() > 0)) {
+        qCritical() << "Tried to ungrab a popup with an empty grab stack";
+    }
+    if (!(m_grabStack.last() == popup)) {
+        qCritical() << "Tried to ungrab a popup that wasn't the topmost popup";
+    }
+    disconnect(popup, &QObject::destroyed, this, &XdgPopupGrab::popupDestroyed);
+    m_grabStack.removeAll(popup);
+}
+
 } // namespace KWaylandServer

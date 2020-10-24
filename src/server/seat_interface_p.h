@@ -26,6 +26,7 @@ class DataControlDeviceV1Interface;
 class TextInputV2Interface;
 class TextInputV3Interface;
 class PrimarySelectionDeviceV1Interface;
+class GrabManager;
 
 class SeatInterface::Private : public Global::Private
 {
@@ -53,6 +54,7 @@ public:
     QVector<PointerInterface*> pointers;
     QScopedPointer<KeyboardInterface> keyboard;
     QVector<TouchInterface*> touchs;
+
     QVector<DataDeviceInterface*> dataDevices;
     QVector<PrimarySelectionDeviceV1Interface*> primarySelectionDevices;
     QVector<DataControlDeviceV1Interface*> dataControlDevices;
@@ -67,6 +69,8 @@ public:
     // the last thing copied into the clipboard content
     AbstractDataSource *currentSelection = nullptr;
     AbstractDataSource *currentPrimarySelection = nullptr;
+
+    GrabManager *grabManager = nullptr;
 
     // Pointer related members
     struct Pointer {
