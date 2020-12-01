@@ -122,11 +122,9 @@ void FakeInputTest::cleanup()
     }
 
     CLEANUP(m_device)
+    CLEANUP(m_fakeInputInterface)
     CLEANUP(m_display)
 #undef CLEANUP
-
-    // these are the children of the display
-    m_fakeInputInterface = nullptr;
 }
 
 void FakeInputTest::testAuthenticate()

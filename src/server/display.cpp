@@ -116,7 +116,7 @@ Display::Display(QObject *parent)
 
 Display::~Display()
 {
-    wl_display_destroy_clients(d->display);
+    emit aboutToTerminate();
     wl_display_destroy(d->display);
 }
 
@@ -216,219 +216,302 @@ OutputInterface *Display::createOutput(QObject *parent)
 {
     OutputInterface *output = new OutputInterface(this, parent);
     connect(output, &QObject::destroyed, this, [this,output] { d->outputs.removeAll(output); });
+    connect(this, &Display::aboutToTerminate, output, [this,output] { removeOutput(output); });
     d->outputs << output;
     return output;
 }
 
 CompositorInterface *Display::createCompositor(QObject *parent)
 {
-    return new CompositorInterface(this, parent);
+    CompositorInterface *compositor = new CompositorInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, compositor, [compositor] { delete compositor; });
+    return compositor;
 }
 
 OutputDeviceInterface *Display::createOutputDevice(QObject *parent)
 {
     OutputDeviceInterface *output = new OutputDeviceInterface(this, parent);
     connect(output, &QObject::destroyed, this, [this,output] { d->outputdevices.removeAll(output); });
+    connect(this, &Display::aboutToTerminate, output, [this,output] { removeOutputDevice(output); });
     d->outputdevices << output;
     return output;
 }
 
 OutputManagementInterface *Display::createOutputManagement(QObject *parent)
 {
-    return new OutputManagementInterface(this, parent);
+    OutputManagementInterface *om = new OutputManagementInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, om, [om] { delete om; });
+    return om;
 }
 
 SeatInterface *Display::createSeat(QObject *parent)
 {
     SeatInterface *seat = new SeatInterface(this, parent);
     connect(seat, &QObject::destroyed, this, [this, seat] { d->seats.removeAll(seat); });
+    connect(this, &Display::aboutToTerminate, seat, [seat] { delete seat; });
     d->seats << seat;
     return seat;
 }
 
 SubCompositorInterface *Display::createSubCompositor(QObject *parent)
 {
-    return new SubCompositorInterface(this, parent);
+    auto c = new SubCompositorInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, c, [c] { delete c; });
+    return c;
 }
 
 DataDeviceManagerInterface *Display::createDataDeviceManager(QObject *parent)
 {
-    return new DataDeviceManagerInterface(this, parent);
+    auto m = new DataDeviceManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, m, [m] { delete m; });
+    return m;
 }
 
 PlasmaShellInterface *Display::createPlasmaShell(QObject* parent)
 {
-    return new PlasmaShellInterface(this, parent);
+    auto s = new PlasmaShellInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, s, [s] { delete s; });
+    return s;
 }
 
 PlasmaWindowManagementInterface *Display::createPlasmaWindowManagement(QObject *parent)
 {
-    return new PlasmaWindowManagementInterface(this, parent);
+    auto wm = new PlasmaWindowManagementInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, wm, [wm] { delete wm; });
+    return wm;
 }
 
 IdleInterface *Display::createIdle(QObject *parent)
 {
-    return new IdleInterface(this, parent);
+    auto i = new IdleInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, i, [i] { delete i; });
+    return i;
 }
 
 FakeInputInterface *Display::createFakeInput(QObject *parent)
 {
-    return new FakeInputInterface(this, parent);
+    auto i = new FakeInputInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, i, [i] { delete i; });
+    return i;
 }
 
 ShadowManagerInterface *Display::createShadowManager(QObject *parent)
 {
-    return new ShadowManagerInterface(this, parent);
+    auto s = new ShadowManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, s, [s] { delete s; });
+    return s;
 }
 
 BlurManagerInterface *Display::createBlurManager(QObject *parent)
 {
-    return new BlurManagerInterface(this, parent);
+    auto b = new BlurManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 ContrastManagerInterface *Display::createContrastManager(QObject *parent)
 {
-    return new ContrastManagerInterface(this, parent);
+    auto b = new ContrastManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 SlideManagerInterface *Display::createSlideManager(QObject *parent)
 {
-    return new SlideManagerInterface(this, parent);
+    auto b = new SlideManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 DpmsManagerInterface *Display::createDpmsManager(QObject *parent)
 {
-    return new DpmsManagerInterface(this, parent);
+    auto d = new DpmsManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 ServerSideDecorationManagerInterface *Display::createServerSideDecorationManager(QObject *parent)
 {
-    return new ServerSideDecorationManagerInterface(this, parent);
+    auto d = new ServerSideDecorationManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 ScreencastV1Interface *Display::createScreencastV1Interface(QObject *parent)
 {
-    return new ScreencastV1Interface(this, parent);
+    auto s = new ScreencastV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, s, [s] { delete s; });
+    return s;
 }
 
 TextInputManagerV2Interface *Display::createTextInputManagerV2(QObject *parent)
 {
-    return new TextInputManagerV2Interface(this, parent);
+    auto t = new TextInputManagerV2Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, t, [t] { delete t; });
+    return t;
 }
 
 TextInputManagerV3Interface *Display::createTextInputManagerV3(QObject *parent)
 {
-    return new TextInputManagerV3Interface(this, parent);
+    auto t = new TextInputManagerV3Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, t, [t] { delete t; });
+    return t;
 }
+
 
 XdgShellInterface *Display::createXdgShell(QObject *parent)
 {
-    return new XdgShellInterface(this, parent);
+    XdgShellInterface *shell = new XdgShellInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, shell, [shell] { delete shell; });
+    return shell;
 }
 
 RelativePointerManagerV1Interface *Display::createRelativePointerManagerV1(QObject *parent)
 {
-    return new RelativePointerManagerV1Interface(this, parent);
+    RelativePointerManagerV1Interface *r = new RelativePointerManagerV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, r, [r] { delete r; });
+    return r;
 }
 
 PointerGesturesV1Interface *Display::createPointerGesturesV1(QObject *parent)
 {
-    return new PointerGesturesV1Interface(this, parent);
+    PointerGesturesV1Interface *p = new PointerGesturesV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, p, [p] { delete p; });
+    return p;
 }
 
 PointerConstraintsV1Interface *Display::createPointerConstraintsV1(QObject *parent)
 {
-    return new PointerConstraintsV1Interface(this, parent);
+    PointerConstraintsV1Interface *p = new PointerConstraintsV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, p, [p] { delete p; });
+    return p;
 }
 
 XdgForeignV2Interface *Display::createXdgForeignV2Interface(QObject *parent)
 {
-    return new XdgForeignV2Interface(this, parent);
+    XdgForeignV2Interface *foreign = new XdgForeignV2Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, foreign, [foreign] { delete foreign; });
+    return foreign;
 }
 
 IdleInhibitManagerV1Interface *Display::createIdleInhibitManagerV1(QObject *parent)
 {
-    return new IdleInhibitManagerV1Interface(this, parent);
+    IdleInhibitManagerV1Interface *idleManager = new IdleInhibitManagerV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, idleManager, [idleManager] { delete idleManager; });
+    return idleManager;
 }
 
 AppMenuManagerInterface *Display::createAppMenuManagerInterface(QObject *parent)
 {
-    return new AppMenuManagerInterface(this, parent);
+    auto b = new AppMenuManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 ServerSideDecorationPaletteManagerInterface *Display::createServerSideDecorationPaletteManager(QObject *parent)
 {
-    return new ServerSideDecorationPaletteManagerInterface(this, parent);
+    auto b = new ServerSideDecorationPaletteManagerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 LinuxDmabufUnstableV1Interface *Display::createLinuxDmabufInterface(QObject *parent)
 {
-    return new LinuxDmabufUnstableV1Interface(this, parent);
+    auto b = new LinuxDmabufUnstableV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 PlasmaVirtualDesktopManagementInterface *Display::createPlasmaVirtualDesktopManagement(QObject *parent)
 {
-    return new PlasmaVirtualDesktopManagementInterface(this, parent);
+    auto b = new PlasmaVirtualDesktopManagementInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 XdgOutputManagerV1Interface *Display::createXdgOutputManagerV1(QObject *parent)
 {
-    return new XdgOutputManagerV1Interface(this, parent);
+    auto b = new XdgOutputManagerV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, b, [b] { delete b; });
+    return b;
 }
 
 XdgDecorationManagerV1Interface *Display::createXdgDecorationManagerV1(QObject *parent)
 {
-    return new XdgDecorationManagerV1Interface(this, parent);
+    auto d = new XdgDecorationManagerV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 EglStreamControllerInterface *Display::createEglStreamControllerInterface(QObject *parent)
 {
-    return new EglStreamControllerInterface(this, parent);
+    EglStreamControllerInterface *e = new EglStreamControllerInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, e, [e] { delete e; });
+    return e;
 }
 
 KeyStateInterface *Display::createKeyStateInterface(QObject *parent)
 {
-    return new KeyStateInterface(this, parent);
+    auto d = new KeyStateInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 TabletManagerV2Interface *Display::createTabletManagerV2(QObject *parent)
 {
-    return new TabletManagerV2Interface(this, parent);
+    auto d = new TabletManagerV2Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 DataControlDeviceManagerV1Interface *Display::createDataControlDeviceManagerV1(QObject *parent)
 {
-    return new DataControlDeviceManagerV1Interface(this, parent);
+    auto m = new DataControlDeviceManagerV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, m, [m] { delete m; });
+    return m;
 }
 
 KeyboardShortcutsInhibitManagerV1Interface *Display::createKeyboardShortcutsInhibitManagerV1(QObject *parent)
 {
-    return new KeyboardShortcutsInhibitManagerV1Interface(this, parent);
+    auto d = new KeyboardShortcutsInhibitManagerV1Interface(this, parent);
+
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 InputMethodV1Interface *Display::createInputMethodInterface(QObject *parent)
 {
-    return new InputMethodV1Interface(this, parent);
+    auto d = new InputMethodV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, d, [d] { delete d; });
+    return d;
 }
 
 ViewporterInterface *Display::createViewporter(QObject *parent)
 {
-    return new ViewporterInterface(this, parent);
+    auto viewporter = new ViewporterInterface(this, parent);
+    connect(this, &Display::aboutToTerminate, viewporter, [viewporter] { delete viewporter; });
+    return viewporter;
 }
 
 PrimarySelectionDeviceManagerV1Interface *Display::createPrimarySelectionDeviceManagerV1(QObject *parent)
 {
-    return new PrimarySelectionDeviceManagerV1Interface(this, parent);
+    auto primarySelection = new PrimarySelectionDeviceManagerV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, primarySelection, [primarySelection] { delete primarySelection; });
+    return primarySelection;
 }
 
 InputPanelV1Interface *Display::createInputPanelInterface(QObject *parent)
 {
-    return new InputPanelV1Interface(this, parent);
+    auto p = new InputPanelV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, p, [p] { delete p; });
+    return p;
 }
 
 LayerShellV1Interface *Display::createLayerShellV1(QObject *parent)
 {
-    return new LayerShellV1Interface(this, parent);
+    auto shell = new LayerShellV1Interface(this, parent);
+    connect(this, &Display::aboutToTerminate, shell, [shell] { delete shell; });
+    return shell;
 }
 
 void Display::createShm()

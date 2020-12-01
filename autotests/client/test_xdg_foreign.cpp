@@ -159,12 +159,11 @@ void TestForeign::cleanup()
         delete m_thread;
         m_thread = nullptr;
     }
+    CLEANUP(m_foreignInterface)
     delete m_display;
     m_display = nullptr;
-#undef CLEANUP
 
-    // these are the children of the display
-    m_foreignInterface = nullptr;
+#undef CLEANUP
 }
 
 void TestForeign::doExport()

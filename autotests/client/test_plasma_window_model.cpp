@@ -145,6 +145,7 @@ void PlasmaWindowModelTest::cleanup()
         variable = nullptr; \
     }
     CLEANUP(m_pw)
+    CLEANUP(m_plasmaVirtualDesktopManagementInterface)
     CLEANUP(m_queue)
     if (m_connection) {
         m_connection->deleteLater();
@@ -157,12 +158,9 @@ void PlasmaWindowModelTest::cleanup()
         m_thread = nullptr;
     }
 
+    CLEANUP(m_pwInterface)
     CLEANUP(m_display)
 #undef CLEANUP
-
-    // these are the children of the display
-    m_plasmaVirtualDesktopManagementInterface = nullptr;
-    m_pwInterface = nullptr;
 }
 
 bool PlasmaWindowModelTest::testBooleanData(PlasmaWindowModel::AdditionalRoles role, void (PlasmaWindowInterface::*function)(bool))

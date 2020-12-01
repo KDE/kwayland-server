@@ -162,12 +162,11 @@ void SelectionTest::cleanup()
         delete variable; \
         variable = nullptr;
 
+    CLEANUP(m_ddmInterface)
+    CLEANUP(m_seatInterface)
+    CLEANUP(m_compositorInterface)
     CLEANUP(m_display)
 #undef CLEANUP
-    // these are the children of the display
-    m_ddmInterface = nullptr;
-    m_seatInterface = nullptr;
-    m_compositorInterface = nullptr;
 }
 
 void SelectionTest::cleanupConnection(Connection *c)
