@@ -62,6 +62,12 @@ class KWAYLANDSERVER_EXPORT LayerSurfaceV1Interface : public QObject
 public:
     enum Layer { BackgroundLayer, BottomLayer, TopLayer, OverlayLayer };
 
+    enum class KeyboardInteractivity : uint {
+        None = 0,
+        Exclusive = 1,
+        OnDemand = 2,
+    };
+
     LayerSurfaceV1Interface(LayerShellV1Interface *shell, SurfaceInterface *surface,
                             OutputInterface *output, Layer layer, const QString &scope,
                             wl_resource *resource);
@@ -94,9 +100,9 @@ public:
     Layer layer() const;
 
     /**
-     * Returns @c true if the surface accepts keyboard input; otherwise returns @c false.
+     * Returns the type of keyboard interactivity for this layer shell surface.
      */
-    bool acceptsFocus() const;
+    KeyboardInteractivity keyboardInteractivity() const;
 
     /**
      * Returns the margins object that indicates the distance between an anchor edge and
@@ -168,7 +174,7 @@ public:
 Q_SIGNALS:
     void aboutToBeDestroyed();
     void configureAcknowledged(quint32 serial);
-    void acceptsFocusChanged();
+    void keyboardInteractivityChanged();
     void layerChanged();
     void anchorChanged();
     void desiredSizeChanged();

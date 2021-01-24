@@ -19,7 +19,7 @@
 namespace KWaylandServer
 {
 
-static const int s_version = 3;
+static const int s_version = 4;
 
 class LayerShellV1InterfacePrivate : public QtWaylandServer::zwlr_layer_shell_v1
 {
@@ -45,7 +45,8 @@ public:
     QMargins margins;
     QSize desiredSize = QSize(0, 0);
     int exclusiveZone = 0;
-    bool acceptsFocus = false;
+    LayerSurfaceV1Interface::KeyboardInteractivity keyboardInteractivity =
+            LayerSurfaceV1Interface::KeyboardInteractivity::None;
 };
 
 class LayerSurfaceV1InterfacePrivate : public SurfaceRole, public QtWaylandServer::zwlr_layer_surface_v1
@@ -209,8 +210,12 @@ void LayerSurfaceV1InterfacePrivate::zwlr_layer_surface_v1_set_margin(Resource *
 
 void LayerSurfaceV1InterfacePrivate::zwlr_layer_surface_v1_set_keyboard_interactivity(Resource *resource, uint32_t keyboard_interactivity)
 {
-    Q_UNUSED(resource)
-    pending.acceptsFocus = keyboard_interactivity;
+    if (keyboard_interactivity > keyboard_interactivity_on_demand) {
+        wl_resource_post_error(resource->handle, error_invalid_keyboard_interactivity,
+                               "unknown keyboard interactivy mode %d", keyboard_interactivity);
+        return;
+    }
+    pending.keyboardInteractivity = LayerSurfaceV1Interface::KeyboardInteractivity(keyboard_interactivity);
 }
 
 void LayerSurfaceV1InterfacePrivate::zwlr_layer_surface_v1_get_popup(Resource *resource, struct ::wl_resource *popup_resource)
@@ -303,8 +308,8 @@ void LayerSurfaceV1InterfacePrivate::commit()
 
     isCommitted = true; // Must set the committed state before emitting any signals.
 
-    if (previous.acceptsFocus != current.acceptsFocus) {
-        emit q->acceptsFocusChanged();
+    if (previous.keyboardInteractivity != current.keyboardInteractivity) {
+        emit q->keyboardInteractivityChanged();
     }
     if (previous.layer != current.layer) {
         emit q->layerChanged();
@@ -363,9 +368,9 @@ QSize LayerSurfaceV1Interface::desiredSize() const
     return d->current.desiredSize;
 }
 
-bool LayerSurfaceV1Interface::acceptsFocus() const
+LayerSurfaceV1Interface::KeyboardInteractivity LayerSurfaceV1Interface::keyboardInteractivity() const
 {
-    return d->current.acceptsFocus;
+    return d->current.keyboardInteractivity;
 }
 
 LayerSurfaceV1Interface::Layer LayerSurfaceV1Interface::layer() const
