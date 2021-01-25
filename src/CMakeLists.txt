@@ -1,3 +1,4 @@
+add_subdirectory(tools)
 add_subdirectory(server)
 
 ecm_qt_install_logging_categories(
