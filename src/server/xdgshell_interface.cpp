@@ -143,6 +143,13 @@ XdgSurfaceInterfacePrivate::XdgSurfaceInterfacePrivate(XdgSurfaceInterface *xdgS
 {
 }
 
+void XdgSurfaceInterfacePrivate::sendConfigure(quint32 serial)
+{
+    emit q->aboutToConfigure(serial);
+    send_configure(serial);
+    isConfigured = true;
+}
+
 void XdgSurfaceInterfacePrivate::commit()
 {
     if (surface->buffer()) {
@@ -603,8 +610,7 @@ quint32 XdgToplevelInterface::sendConfigure(const QSize &size, const States &sta
     d->send_configure(size.width(), size.height(), xdgStates);
 
     auto xdgSurfacePrivate = XdgSurfaceInterfacePrivate::get(xdgSurface());
-    xdgSurfacePrivate->send_configure(serial);
-    xdgSurfacePrivate->isConfigured = true;
+    xdgSurfacePrivate->sendConfigure(serial);
 
     return serial;
 }
@@ -739,8 +745,7 @@ quint32 XdgPopupInterface::sendConfigure(const QRect &rect)
     d->send_configure(rect.x(), rect.y(), rect.width(), rect.height());
 
     auto xdgSurfacePrivate = XdgSurfaceInterfacePrivate::get(xdgSurface());
-    xdgSurfacePrivate->send_configure(serial);
-    xdgSurfacePrivate->isConfigured = true;
+    xdgSurfacePrivate->sendConfigure(serial);
 
     return serial;
 }

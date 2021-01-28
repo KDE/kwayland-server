@@ -79,16 +79,24 @@ public:
      */
     XdgToplevelInterface *toplevel() const;
     /**
+     * Returns the last decoration mode acknowledged by the client.
+     */
+    Mode mode() const;
+    /**
      * Returns the decoration mode preferred by the client.
      */
     Mode preferredMode() const;
     /**
-     * Sends a configure event to the client. \a mode indicates the decoration mode the client
-     * should be using. The client must send an ack_configure in response to this event.
+     * Schedules a configure event to be sent to the client. \a mode indicates the decoration
+     * mode the client should be using. The client must send an ack_configure in response to
+     * this event.
+     *
+     * Note that the configure event will be sent when XdgToplevelInterface::sendConfigure()
+     * is called.
      *
      * \see XdgToplevelInterface::sendConfigure
      */
-    void sendConfigure(Mode mode);
+    void scheduleConfigure(Mode mode);
 
     /**
      * Returns the XdgToplevelDecorationV1Interface for the specified \a toplevel.
@@ -96,6 +104,10 @@ public:
     static XdgToplevelDecorationV1Interface *get(XdgToplevelInterface *toplevel);
 
 Q_SIGNALS:
+    /**
+     * This signal is emitted when the client has acknowledged a previously configured mode.
+     */
+    void modeChanged(KWaylandServer::XdgToplevelDecorationV1Interface::Mode mode);
     /**
      * This signal is emitted when the client has specified the preferred decoration mode. The
      * compositor can decide not to use the client's mode and enforce a different mode instead.

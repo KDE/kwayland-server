@@ -59,9 +59,17 @@ XdgDecorationManagerV1Interface::~XdgDecorationManagerV1Interface()
 {
 }
 
-XdgToplevelDecorationV1InterfacePrivate::XdgToplevelDecorationV1InterfacePrivate(XdgToplevelDecorationV1Interface *decoration)
+XdgToplevelDecorationV1InterfacePrivate::XdgToplevelDecorationV1InterfacePrivate(XdgToplevelDecorationV1Interface *decoration,
+                                                                                 XdgToplevelInterface *toplevel)
     : q(decoration)
+    , toplevel(toplevel)
 {
+    XdgSurfaceInterface *surface = toplevel->xdgSurface();
+
+    QObject::connect(surface, &XdgSurfaceInterface::configureAcknowledged,
+                     q, [this](quint32 serial) { handleSurfaceConfigureAcknowledged(serial); });
+    QObject::connect(surface, &XdgSurfaceInterface::aboutToConfigure,
+                     q, [this](quint32 serial) { handleSurfaceConfigure(serial); });
 }
 
 void XdgToplevelDecorationV1InterfacePrivate::zxdg_toplevel_decoration_v1_destroy_resource(Resource *resource)
@@ -101,10 +109,41 @@ void XdgToplevelDecorationV1InterfacePrivate::zxdg_toplevel_decoration_v1_unset_
     Q_EMIT q->preferredModeChanged(preferredMode);
 }
 
-XdgToplevelDecorationV1Interface::XdgToplevelDecorationV1Interface(XdgToplevelInterface *toplevel, ::wl_resource *resource)
-    : d(new XdgToplevelDecorationV1InterfacePrivate(this))
+void XdgToplevelDecorationV1InterfacePrivate::handleSurfaceConfigure(quint32 serial)
 {
-    d->toplevel = toplevel;
+    if (mode == requestedMode) {
+        return;
+    }
+
+    switch (requestedMode) {
+    case XdgToplevelDecorationV1Interface::Mode::Client:
+        send_configure(QtWaylandServer::zxdg_toplevel_decoration_v1::mode_client_side);
+        break;
+    case XdgToplevelDecorationV1Interface::Mode::Server:
+        send_configure(QtWaylandServer::zxdg_toplevel_decoration_v1::mode_server_side);
+        break;
+    case XdgToplevelDecorationV1Interface::Mode::Undefined:
+        Q_UNREACHABLE();
+    }
+
+    configureEvents.append(XdgToplevelDecorationV1ConfigureEvent{requestedMode, serial});
+}
+
+void XdgToplevelDecorationV1InterfacePrivate::handleSurfaceConfigureAcknowledged(quint32 serial)
+{
+    while (!configureEvents.isEmpty()) {
+        const XdgToplevelDecorationV1ConfigureEvent configure = configureEvents.takeFirst();
+        if (configure.serial == serial) {
+            mode = configure.mode;
+            emit q->modeChanged(mode);
+            return;
+        }
+    }
+}
+
+XdgToplevelDecorationV1Interface::XdgToplevelDecorationV1Interface(XdgToplevelInterface *toplevel, ::wl_resource *resource)
+    : d(new XdgToplevelDecorationV1InterfacePrivate(this, toplevel))
+{
     d->init(resource);
 }
 
@@ -117,23 +156,20 @@ XdgToplevelInterface *XdgToplevelDecorationV1Interface::toplevel() const
     return d->toplevel;
 }
 
+XdgToplevelDecorationV1Interface::Mode XdgToplevelDecorationV1Interface::mode() const
+{
+    return d->mode;
+}
+
 XdgToplevelDecorationV1Interface::Mode XdgToplevelDecorationV1Interface::preferredMode() const
 {
     return d->preferredMode;
 }
 
-void XdgToplevelDecorationV1Interface::sendConfigure(Mode mode)
+void XdgToplevelDecorationV1Interface::scheduleConfigure(Mode mode)
 {
-    switch (mode) {
-    case Mode::Client:
-        d->send_configure(QtWaylandServer::zxdg_toplevel_decoration_v1::mode_client_side);
-        break;
-    case Mode::Server:
-        d->send_configure(QtWaylandServer::zxdg_toplevel_decoration_v1::mode_server_side);
-        break;
-    case Mode::Undefined:
-        break;
-    }
+    Q_ASSERT(mode != Mode::Undefined);
+    d->requestedMode = mode;
 }
 
 XdgToplevelDecorationV1Interface *XdgToplevelDecorationV1Interface::get(XdgToplevelInterface *toplevel)

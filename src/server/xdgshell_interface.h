@@ -164,6 +164,11 @@ Q_SIGNALS:
      * This signal is emitted when the xdg-surface is about to be destroyed.
      */
     void aboutToBeDestroyed();
+    /**
+     * This signal is emitted when a configure event with the given \a serial is about to
+     * be sent to the client.
+     */
+    void aboutToConfigure(quint32 serial);
 
     /**
      * This signal is emitted when a configure event with serial \a serial has been acknowledged.

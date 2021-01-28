@@ -198,29 +198,37 @@ void TestXdgDecoration::testDecoration()
     QVERIFY(decorationIface);
     QVERIFY(shellSurfaceIface);
     QCOMPARE(decorationIface->toplevel(), shellSurfaceIface);
+    QCOMPARE(decorationIface->mode(), XdgToplevelDecorationV1Interface::Mode::Undefined);
     QCOMPARE(decorationIface->preferredMode(), XdgToplevelDecorationV1Interface::Mode::Undefined);
 
     QSignalSpy clientConfiguredSpy(decoration.data(), &XdgDecoration::modeChanged);
-    QSignalSpy modeRequestedSpy(decorationIface, &XdgToplevelDecorationV1Interface::preferredModeChanged);
+    QSignalSpy preferredModeChangedSpy(decorationIface, &XdgToplevelDecorationV1Interface::preferredModeChanged);
+    QSignalSpy modeChangedSpy(decorationIface, &XdgToplevelDecorationV1Interface::modeChanged);
 
-    // server configuring a client
-    decorationIface->sendConfigure(configuredMode);
+    //server configuring a client
+    decorationIface->scheduleConfigure(configuredMode);
     quint32 serial = shellSurfaceIface->sendConfigure(QSize(0, 0), {});
     QVERIFY(clientConfiguredSpy.wait());
     QCOMPARE(clientConfiguredSpy.first().first().value<XdgDecoration::Mode>(), configuredModeExp);
 
     shellSurface->ackConfigure(serial);
+    surface->commit(KWayland::Client::Surface::CommitFlag::None);
 
     // client requesting another mode
+    QVERIFY(modeChangedSpy.wait());
+    QCOMPARE(decorationIface->mode(), configuredMode);
+
+    //client requesting another mode
     decoration->setMode(setMode);
-    QVERIFY(modeRequestedSpy.wait());
-    QCOMPARE(modeRequestedSpy.first().first().value<XdgToplevelDecorationV1Interface::Mode>(), setModeExp);
+    QVERIFY(preferredModeChangedSpy.wait());
+    QCOMPARE(preferredModeChangedSpy.first().first().value<XdgToplevelDecorationV1Interface::Mode>(), setModeExp);
     QCOMPARE(decorationIface->preferredMode(), setModeExp);
-    modeRequestedSpy.clear();
+    preferredModeChangedSpy.clear();
 
     decoration->unsetMode();
-    QVERIFY(modeRequestedSpy.wait());
-    QCOMPARE(modeRequestedSpy.first().first().value<XdgToplevelDecorationV1Interface::Mode>(), XdgToplevelDecorationV1Interface::Mode::Undefined);
+    QVERIFY(preferredModeChangedSpy.wait());
+    QCOMPARE(preferredModeChangedSpy.first().first().value<XdgToplevelDecorationV1Interface::Mode>(),
+             XdgToplevelDecorationV1Interface::Mode::Undefined);
 }
 
 QTEST_GUILESS_MAIN(TestXdgDecoration)

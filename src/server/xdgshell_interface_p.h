@@ -95,6 +95,8 @@ class XdgSurfaceInterfacePrivate : public QtWaylandServer::xdg_surface
 public:
     XdgSurfaceInterfacePrivate(XdgSurfaceInterface *xdgSurface);
 
+    void sendConfigure(quint32 serial);
+
     void commit();
     void reset();
 
