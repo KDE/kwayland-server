@@ -311,13 +311,11 @@ PlasmaWindowInterfacePrivate::PlasmaWindowInterfacePrivate(PlasmaWindowManagemen
 
 PlasmaWindowInterfacePrivate::~PlasmaWindowInterfacePrivate()
 {
-    destroyed = true;
     const auto clientResources = resourceMap();
     for (auto resource : clientResources) {
         if(!unmapped) {
             send_unmapped(resource->handle);
         }
-        wl_resource_destroy(resource->handle);
     }
 }
 
@@ -330,7 +328,7 @@ void PlasmaWindowInterfacePrivate::org_kde_plasma_window_destroy_resource(Resour
 {
     Q_UNUSED(resource)
     // Auto destruct when all resources gone
-    if (unmapped && resourceMap().isEmpty() && !destroyed) { 
+    if (unmapped && resourceMap().isEmpty()) {
         delete q;
     }
 }
