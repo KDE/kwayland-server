@@ -31,6 +31,7 @@ public:
      * @returns the focused SurfaceInterface on this keyboard resource, if any.
      **/
     SurfaceInterface *focusedSurface() const;
+    void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
 
     /**
      * @returns The key repeat in character per second
@@ -41,7 +42,6 @@ public:
      **/
     qint32 keyRepeatDelay() const;
     void setKeymap(const QByteArray &content);
-    void updateModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group);
 
     /**
      * Sets the key repeat information to be forwarded to all bound keyboards.
@@ -57,11 +57,11 @@ public:
      **/
     void setRepeatInfo(qint32 charactersPerSecond, qint32 delay);
 
-    void keyPressed(quint32 key);
-    void keyReleased(quint32 key);
+    void sendPressed(quint32 key);
+    void sendReleased(quint32 key);
+    void sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group);
 
 private:
-    void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
     friend class SeatInterface;
     friend class KeyboardInterfacePrivate;
     explicit KeyboardInterface(SeatInterface *seat);

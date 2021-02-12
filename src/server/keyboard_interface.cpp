@@ -184,7 +184,7 @@ QVector<quint32> KeyboardInterfacePrivate::pressedKeys() const
 }
 
 
-void KeyboardInterface::keyPressed(quint32 key)
+void KeyboardInterface::sendPressed(quint32 key)
 {
     if (!d->focusedSurface) {
         return;
@@ -201,7 +201,7 @@ void KeyboardInterface::keyPressed(quint32 key)
     }
 }
 
-void KeyboardInterface::keyReleased(quint32 key)
+void KeyboardInterface::sendReleased(quint32 key)
 {
     if (!d->focusedSurface) {
         return;
@@ -218,7 +218,7 @@ void KeyboardInterface::keyReleased(quint32 key)
     }
 }
 
-void KeyboardInterface::updateModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
+void KeyboardInterface::sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
 {
     bool changed = false;
 #define UPDATE( value ) \
