@@ -1131,32 +1131,6 @@ void SeatInterface::setFocusedKeyboardSurface(SurfaceInterface *surface)
             }
         );
         d->globalKeyboard.focus.serial = serial;
-        // selection?
-        const QVector<DataDeviceInterface *> dataDevices = d->dataDevicesForSurface(surface);
-        d->globalKeyboard.focus.selections = dataDevices;
-        for (auto dataDevice : dataDevices) {
-            if (d->currentSelection) {
-                dataDevice->sendSelection(d->currentSelection);
-            } else {
-                dataDevice->sendClearSelection();
-            }
-        }
-        // primary selection
-        QVector<PrimarySelectionDeviceV1Interface *> primarySelectionDevices;
-        for (auto it = d->primarySelectionDevices.constBegin(); it != d->primarySelectionDevices.constEnd(); ++it) {
-            if ((*it)->client() == *surface->client()) {
-                primarySelectionDevices << *it;
-            }
-        }
-
-        d->globalKeyboard.focus.primarySelections = primarySelectionDevices;
-        for (auto primaryDataDevice : primarySelectionDevices) {
-            if (d->currentSelection) {
-                primaryDataDevice->sendSelection(d->currentPrimarySelection);
-            } else {
-                primaryDataDevice->sendClearSelection();
-            }
-        }
     }
 
     d->keyboard->setFocusedSurface(surface, serial);

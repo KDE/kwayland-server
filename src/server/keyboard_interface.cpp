@@ -4,8 +4,10 @@
     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
 */
 #include "keyboard_interface_p.h"
+#include "datadevice_interface.h"
 #include "display.h"
 #include "logging.h"
+#include "primaryselectiondevice_v1_interface.h"
 #include "seat_interface.h"
 #include "seat_interface_p.h"
 #include "surface_interface.h"
@@ -152,6 +154,8 @@ void KeyboardInterfacePrivate::sendModifiers()
 
 void KeyboardInterface::setFocusedSurface(SurfaceInterface *surface, quint32 serial)
 {
+    SeatInterface::Private *seatPrivate = d->seat->d_func();
+
     d->sendLeave(d->focusedChildSurface, serial);
     disconnect(d->destroyConnection);
     d->focusedChildSurface.clear();
@@ -170,6 +174,33 @@ void KeyboardInterface::setFocusedSurface(SurfaceInterface *surface, quint32 ser
     d->focusedChildSurface = QPointer<SurfaceInterface>(surface);
 
     d->sendEnter(d->focusedSurface, serial);
+
+    // selection?
+    const QVector<DataDeviceInterface *> dataDevices = seatPrivate->dataDevicesForSurface(surface);
+    seatPrivate->globalKeyboard.focus.selections = dataDevices;
+    for (auto dataDevice : dataDevices) {
+        if (seatPrivate->currentSelection) {
+            dataDevice->sendSelection(seatPrivate->currentSelection);
+        } else {
+            dataDevice->sendClearSelection();
+        }
+    }
+    // primary selection
+    QVector<PrimarySelectionDeviceV1Interface *> primarySelectionDevices;
+    for (auto selection : qAsConst(seatPrivate->primarySelectionDevices)) {
+        if (selection->client() == *surface->client()) {
+            primarySelectionDevices << selection;
+        }
+    }
+
+    seatPrivate->globalKeyboard.focus.primarySelections = primarySelectionDevices;
+    for (auto primaryDataDevice : qAsConst(primarySelectionDevices)) {
+        if (seatPrivate->currentSelection) {
+            primaryDataDevice->sendSelection(seatPrivate->currentPrimarySelection);
+        } else {
+            primaryDataDevice->sendClearSelection();
+        }
+    }
 }
 
 QVector<quint32> KeyboardInterfacePrivate::pressedKeys() const
