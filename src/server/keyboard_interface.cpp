@@ -41,16 +41,6 @@ QList<KeyboardInterfacePrivate::Resource *> KeyboardInterfacePrivate::keyboardsF
     return resourceMap().values(client->client());
 }
 
-void KeyboardInterfacePrivate::focusChildSurface(SurfaceInterface *childSurface, quint32 serial)
-{
-    if (focusedChildSurface == childSurface) {
-        return;
-    }
-    sendLeave(focusedChildSurface.data(), serial);
-    focusedChildSurface = QPointer<SurfaceInterface>(childSurface);
-    sendEnter(focusedChildSurface.data(), serial);
-}
-
 void KeyboardInterfacePrivate::sendLeave(SurfaceInterface *surface, quint32 serial)
 {
     if (!surface) {
@@ -156,22 +146,20 @@ void KeyboardInterface::setFocusedSurface(SurfaceInterface *surface, quint32 ser
 {
     SeatInterface::Private *seatPrivate = d->seat->d_func();
 
-    d->sendLeave(d->focusedChildSurface, serial);
+    d->sendLeave(d->focusedSurface, serial);
     disconnect(d->destroyConnection);
-    d->focusedChildSurface.clear();
+
     d->focusedSurface = surface;
     if (!d->focusedSurface) {
         return;
     }
     d->destroyConnection = connect(d->focusedSurface, &SurfaceInterface::aboutToBeDestroyed, this,
         [this] {
-            CompositorInterface *compositor = d->focusedChildSurface->compositor();
-            d->sendLeave(d->focusedChildSurface.data(), compositor->display()->nextSerial());
+            CompositorInterface *compositor = d->focusedSurface->compositor();
+            d->sendLeave(d->focusedSurface, compositor->display()->nextSerial());
             d->focusedSurface = nullptr;
-            d->focusedChildSurface.clear();
         }
     );
-    d->focusedChildSurface = QPointer<SurfaceInterface>(surface);
 
     d->sendEnter(d->focusedSurface, serial);
 

@@ -914,13 +914,6 @@ void SeatInterface::pointerButtonPressed(quint32 button)
         for (auto it = d->globalPointer.focus.pointers.constBegin(), end = d->globalPointer.focus.pointers.constEnd(); it != end; ++it) {
             (*it)->buttonPressed(button, serial);
         }
-        if (focusSurface == d->globalKeyboard.focus.surface) {
-            // update the focused child surface
-            auto p = focusedPointer();
-            if (p && d->keyboard) {
-                d->keyboard->d->focusChildSurface(p->d_func()->focusedChildSurface, serial);
-            }
-        }
     }
 }
 
