@@ -1,5 +1,6 @@
 /*
     SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2021 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
 
     SPDX-License-Identifier: LGPL-2.1-only OR LGPL-3.0-only OR LicenseRef-KDE-Accepted-LGPL
 */
@@ -8,93 +9,97 @@
 
 #include <KWaylandServer/kwaylandserver_export.h>
 
-#include "resource.h"
+#include <QObject>
+
+struct wl_resource;
 
 namespace KWaylandServer
 {
 
+class CursorPrivate;
 class Cursor;
+class PointerInterfacePrivate;
 class SeatInterface;
 class SurfaceInterface;
 
 enum class PointerAxisSource;
 
 /**
- * @brief Resource for the wl_pointer interface.
+ * The PointerInterface class represents one or more input devices such as mice, which control
+ * the pointer location.
  *
  * @see SeatInterface
- **/
-class KWAYLANDSERVER_EXPORT PointerInterface : public Resource
+ */
+class KWAYLANDSERVER_EXPORT PointerInterface : public QObject
 {
     Q_OBJECT
+
 public:
-    virtual ~PointerInterface();
+    explicit PointerInterface(SeatInterface *seat);
+    ~PointerInterface() override;
 
     /**
-     * @returns the focused SurfaceInterface on this pointer resource, if any.
-     **/
+     * Returns the focused pointer surface. Note that the returned value may be different
+     * from SurfaceInterface::focusedSurfacePointerSurface() because this function returns
+     * the effective focused surface.
+     */
     SurfaceInterface *focusedSurface() const;
-
     /**
-     * The Cursor set on this PointerInterface. Might be @c null.
-     * @since 5.3
-     **/
+     * Sets the effective focused pointer surface to @a surface. The @a position indicates
+     * where the pointer has entered the surface.
+     */
+    void setFocusedSurface(SurfaceInterface *surface, const QPointF &position, quint32 serial);
+
     Cursor *cursor() const;
+    SeatInterface *seat() const;
 
     /**
      * @returns The PointerInterface for the @p native resource.
-     * @since 5.28
-     **/
+     */
     static PointerInterface *get(wl_resource *native);
+
+    void sendPressed(quint32 button, quint32 serial);
+    void sendReleased(quint32 button, quint32 serial);
+    void sendAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source);
+    void sendMotion(const QPointF &position);
+    void sendFrame();
 
 Q_SIGNALS:
     /**
      * Signal emitted whenever the Cursor changes.
-     **/
+     */
     void cursorChanged();
 
 private:
-    void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
-    void buttonPressed(quint32 button, quint32 serial);
-    void buttonReleased(quint32 button, quint32 serial);
-    void axis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source);
-    void axis(Qt::Orientation orientation, quint32 delta);
-    void relativeMotion(const QSizeF &delta, const QSizeF &deltaNonAccelerated, quint64 microseconds);
-    friend class SeatInterface;
-    friend class RelativePointerV1Interface;
-    friend class PointerPinchGestureV1Interface;
-    friend class PointerSwipeGestureV1Interface;
-    explicit PointerInterface(SeatInterface *parent, wl_resource *parentResource);
-    class Private;
-    Private *d_func() const;
+    QScopedPointer<PointerInterfacePrivate> d;
+    friend class PointerInterfacePrivate;
 };
 
 /**
  * @brief Class encapsulating a Cursor image.
- *
- * @since 5.3
- **/
+ */
 class KWAYLANDSERVER_EXPORT Cursor : public QObject
 {
     Q_OBJECT
+
 public:
     virtual ~Cursor();
     /**
      * The hotspot of the cursor image in surface-relative coordinates.
-     **/
+     */
     QPoint hotspot() const;
     /**
      * The entered serial when the Cursor got set.
-     **/
+     */
     quint32 enteredSerial() const;
     /**
      * The PointerInterface this Cursor belongs to.
-     **/
+     */
     PointerInterface *pointer() const;
     /**
      * The SurfaceInterface for the image content of the Cursor.
-     **/
-    QPointer<SurfaceInterface> surface() const;
+     */
+    SurfaceInterface *surface() const;
 
 Q_SIGNALS:
     void hotspotChanged();
@@ -103,13 +108,12 @@ Q_SIGNALS:
     void changed();
 
 private:
-    friend class PointerInterface;
-    Cursor(PointerInterface *parent);
-    class Private;
-    const QScopedPointer<Private> d;
+    QScopedPointer<CursorPrivate> d;
+    friend class PointerInterfacePrivate;
+    explicit Cursor(PointerInterface *parent);
 };
 
-}
+} // namespace KWaylandServer
 
 Q_DECLARE_METATYPE(KWaylandServer::PointerInterface*)
 

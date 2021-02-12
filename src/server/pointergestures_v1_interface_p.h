@@ -14,8 +14,10 @@
 namespace KWaylandServer
 {
 
+class ClientConnection;
 class Display;
 class PointerInterface;
+class SurfaceInterface;
 
 class PointerGesturesV1InterfacePrivate : public QtWaylandServer::zwp_pointer_gestures_v1
 {
@@ -30,30 +32,50 @@ protected:
     void zwp_pointer_gestures_v1_release(Resource *resource) override;
 };
 
-class PointerSwipeGestureV1Interface : public QtWaylandServer::zwp_pointer_gesture_swipe_v1
+class PointerSwipeGestureV1Interface : public QObject, public QtWaylandServer::zwp_pointer_gesture_swipe_v1
 {
+    Q_OBJECT
+
 public:
-    PointerSwipeGestureV1Interface(PointerInterface *pointer, ::wl_resource *resource);
+    explicit PointerSwipeGestureV1Interface(PointerInterface *pointer, QObject *parent = nullptr);
     ~PointerSwipeGestureV1Interface() override;
 
-    QPointer<PointerInterface> pointer;
+    static PointerSwipeGestureV1Interface *get(PointerInterface *pointer);
+
+    void sendBegin(quint32 serial, quint32 fingerCount);
+    void sendUpdate(const QSizeF &delta);
+    void sendEnd(quint32 serial);
+    void sendCancel(quint32 serial);
 
 protected:
-    void zwp_pointer_gesture_swipe_v1_destroy_resource(Resource *resource) override;
     void zwp_pointer_gesture_swipe_v1_destroy(Resource *resource) override;
+
+private:
+    QPointer<PointerInterface> pointer;
+    QPointer<ClientConnection> focusedClient;
 };
 
-class PointerPinchGestureV1Interface : public QtWaylandServer::zwp_pointer_gesture_pinch_v1
+class PointerPinchGestureV1Interface : public QObject, public QtWaylandServer::zwp_pointer_gesture_pinch_v1
 {
+    Q_OBJECT
+
 public:
-    PointerPinchGestureV1Interface(PointerInterface *pointer, ::wl_resource *resource);
+    explicit PointerPinchGestureV1Interface(PointerInterface *pointer, QObject *parent = nullptr);
     ~PointerPinchGestureV1Interface() override;
 
-    QPointer<PointerInterface> pointer;
+    static PointerPinchGestureV1Interface *get(PointerInterface *pointer);
+
+    void sendBegin(quint32 serial, quint32 fingerCount);
+    void sendUpdate(const QSizeF &delta, qreal scale, qreal rotation);
+    void sendEnd(quint32 serial);
+    void sendCancel(quint32 serial);
 
 protected:
-    void zwp_pointer_gesture_pinch_v1_destroy_resource(Resource *resource) override;
     void zwp_pointer_gesture_pinch_v1_destroy(Resource *resource) override;
+
+private:
+    QPointer<PointerInterface> pointer;
+    QPointer<ClientConnection> focusedClient;
 };
 
 } // namespace KWaylandServer

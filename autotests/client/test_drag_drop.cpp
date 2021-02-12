@@ -510,7 +510,7 @@ void TestDragAndDrop::testPointerEventsIgnored()
     m_seatInterface->setTimestamp(timestamp++);
     m_seatInterface->setPointerPos(QPointF(10, 10));
     m_seatInterface->setTimestamp(timestamp++);
-    m_seatInterface->pointerAxis(Qt::Vertical, 5);
+    m_seatInterface->pointerAxis(Qt::Vertical, 5, 1, PointerAxisSource::Wheel);
     // verify that we have those
     QVERIFY(axisSpy.wait());
     QCOMPARE(axisSpy.count(), 1);
@@ -533,9 +533,9 @@ void TestDragAndDrop::testPointerEventsIgnored()
     m_seatInterface->setTimestamp(timestamp++);
     m_seatInterface->pointerButtonReleased(2);
     m_seatInterface->setTimestamp(timestamp++);
-    m_seatInterface->pointerAxis(Qt::Vertical, 5);
+    m_seatInterface->pointerAxis(Qt::Vertical, 5, 1, PointerAxisSource::Wheel);
     m_seatInterface->setTimestamp(timestamp++);
-    m_seatInterface->pointerAxis(Qt::Horizontal, 5);
+    m_seatInterface->pointerAxis(Qt::Vertical, 5, 1, PointerAxisSource::Wheel);
     m_seatInterface->setTimestamp(timestamp++);
     m_seatInterface->setFocusedPointerSurface(nullptr);
     m_seatInterface->setTimestamp(timestamp++);

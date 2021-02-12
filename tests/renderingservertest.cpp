@@ -218,10 +218,10 @@ void CompositorWindow::wheelEvent(QWheelEvent *event)
     m_seat->setTimestamp(event->timestamp());
     const QPoint &angle = event->angleDelta() / (8 * 15);
     if (angle.x() != 0) {
-        m_seat->pointerAxis(Qt::Horizontal, angle.x());
+        m_seat->pointerAxis(Qt::Horizontal, angle.x(), 1, KWaylandServer::PointerAxisSource::Wheel);
     }
     if (angle.y() != 0) {
-        m_seat->pointerAxis(Qt::Vertical, angle.y());
+        m_seat->pointerAxis(Qt::Vertical, angle.y(), 1, KWaylandServer::PointerAxisSource::Wheel);
     }
 }
 

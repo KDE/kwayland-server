@@ -14,6 +14,7 @@
 namespace KWaylandServer
 {
 
+class ClientConnection;
 class Display;
 class PointerInterface;
 
@@ -28,17 +29,22 @@ protected:
                                                               struct ::wl_resource *pointer_resource) override;
 };
 
-class RelativePointerV1Interface : public QtWaylandServer::zwp_relative_pointer_v1
+class RelativePointerV1Interface : public QObject, public QtWaylandServer::zwp_relative_pointer_v1
 {
+    Q_OBJECT
+
 public:
-    RelativePointerV1Interface(PointerInterface *pointer, ::wl_resource *resource);
+    explicit RelativePointerV1Interface(PointerInterface *pointer, QObject *parent = nullptr);
     ~RelativePointerV1Interface() override;
 
-    QPointer<PointerInterface> pointer;
+    static RelativePointerV1Interface *get(PointerInterface *pointer);
+    void sendRelativeMotion(const QSizeF &delta, const QSizeF &deltaNonAccelerated, quint64 microseconds);
 
 protected:
-    void zwp_relative_pointer_v1_destroy_resource(Resource *resource) override;
     void zwp_relative_pointer_v1_destroy(Resource *resource) override;
+
+private:
+    QPointer<PointerInterface> pointer;
 };
 
 } // namespace KWaylandServer
