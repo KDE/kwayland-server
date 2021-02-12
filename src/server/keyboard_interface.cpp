@@ -43,9 +43,6 @@ QList<KeyboardInterfacePrivate::Resource *> KeyboardInterfacePrivate::keyboardsF
 
 void KeyboardInterfacePrivate::sendLeave(SurfaceInterface *surface, quint32 serial)
 {
-    if (!surface) {
-        return;
-    }
     const QList<Resource *> keyboards = keyboardsForClient(surface->client());
     for (Resource *keyboardResource : keyboards) {
         send_leave(keyboardResource->handle, serial, surface->resource());
@@ -54,9 +51,6 @@ void KeyboardInterfacePrivate::sendLeave(SurfaceInterface *surface, quint32 seri
 
 void KeyboardInterfacePrivate::sendEnter(SurfaceInterface *surface, quint32 serial)
 {
-    if (!surface) {
-        return;
-    }
     const auto states = pressedKeys();
     QByteArray data = QByteArray::fromRawData(
         reinterpret_cast<const char*>(states.constData()),
@@ -146,8 +140,10 @@ void KeyboardInterface::setFocusedSurface(SurfaceInterface *surface, quint32 ser
 {
     SeatInterface::Private *seatPrivate = d->seat->d_func();
 
-    d->sendLeave(d->focusedSurface, serial);
-    disconnect(d->destroyConnection);
+    if (d->focusedSurface) {
+        d->sendLeave(d->focusedSurface, serial);
+        disconnect(d->destroyConnection);
+    }
 
     d->focusedSurface = surface;
     if (!d->focusedSurface) {
