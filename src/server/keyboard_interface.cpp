@@ -153,13 +153,11 @@ void KeyboardInterface::setFocusedSurface(SurfaceInterface *surface, quint32 ser
     if (!d->focusedSurface) {
         return;
     }
-    d->destroyConnection = connect(d->focusedSurface, &SurfaceInterface::aboutToBeDestroyed, this,
-        [this] {
-            CompositorInterface *compositor = d->focusedSurface->compositor();
-            d->sendLeave(d->focusedSurface, compositor->display()->nextSerial());
-            d->focusedSurface = nullptr;
-        }
-    );
+    d->destroyConnection = connect(d->focusedSurface, &SurfaceInterface::aboutToBeDestroyed, this, [this] {
+        CompositorInterface *compositor = d->focusedSurface->compositor();
+        d->sendLeave(d->focusedSurface, compositor->display()->nextSerial());
+        d->focusedSurface = nullptr;
+    });
 
     d->sendEnter(d->focusedSurface, serial);
 
@@ -201,7 +199,6 @@ QVector<quint32> KeyboardInterfacePrivate::pressedKeys() const
     }
     return keys;
 }
-
 
 void KeyboardInterface::sendPressed(quint32 key)
 {
