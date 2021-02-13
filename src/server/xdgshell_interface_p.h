@@ -9,12 +9,18 @@
 #include "xdgshell_interface.h"
 #include "qwayland-server-xdg-shell.h"
 
+#include "keyboardgrab.h"
+#include "pointergrab.h"
 #include "surface_interface.h"
 #include "surfacerole_p.h"
+#include "touchgrab.h"
+
+#include <QStack>
 
 namespace KWaylandServer
 {
 
+class XdgPopupGrab;
 class XdgToplevelDecorationV1Interface;
 
 class XdgShellInterfacePrivate : public QtWaylandServer::xdg_wm_base
@@ -27,6 +33,9 @@ public:
     void registerXdgSurface(XdgSurfaceInterface *surface);
     void unregisterXdgSurface(XdgSurfaceInterface *surface);
 
+    XdgPopupGrab *getOrCreatePopupGrab(SeatInterface *seat, ClientConnection *client);
+    void destroyPopupGrab(XdgPopupGrab *grab);
+
     void registerPing(quint32 serial);
 
     static XdgShellInterfacePrivate *get(XdgShellInterface *shell);
@@ -34,6 +43,7 @@ public:
     XdgShellInterface *q;
     Display *display;
     QMap<quint32, QTimer *> pings;
+    QList<XdgPopupGrab *> grabs;
 
 protected:
     void xdg_wm_base_destroy(Resource *resource) override;
@@ -179,12 +189,92 @@ public:
     SurfaceInterface *parentSurface;
     XdgSurfaceInterface *xdgSurface;
     XdgPositioner positioner;
+    XdgPopupGrab *popupGrab = nullptr;
 
 protected:
     void xdg_popup_destroy_resource(Resource *resource) override;
     void xdg_popup_destroy(Resource *resource) override;
     void xdg_popup_grab(Resource *resource, ::wl_resource *seat, uint32_t serial) override;
     void xdg_popup_reposition(Resource *resource, struct ::wl_resource *positioner, uint32_t token) override;
+};
+
+class XdgPopupKeyboardGrab : public KeyboardGrab
+{
+    Q_OBJECT
+
+public:
+    XdgPopupKeyboardGrab(XdgPopupGrab *grab, SeatInterface *seat);
+
+    void cancel() override;
+
+    void handleFocusChange(SurfaceInterface *surface, quint32 serial) override;
+    void handlePressEvent(quint32 keyCode) override;
+    void handleReleaseEvent(quint32 keyCode) override;
+    void handleModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group) override;
+
+private:
+    XdgPopupGrab *m_popupGrab;
+};
+
+class XdgPopupTouchGrab : public TouchGrab
+{
+    Q_OBJECT
+
+public:
+    XdgPopupTouchGrab(XdgPopupGrab *grab, SeatInterface *seat);
+
+    void cancel() override;
+
+    void handleFocusChange(SurfaceInterface *surface) override;
+    void handleDown(qint32 id, quint32 serial, const QPointF &localPos) override;
+    void handleUp(qint32 id, quint32 serial) override;
+    void handleFrame() override;
+    void handleCancel() override;
+    void handleMotion(qint32 id, const QPointF &localPos) override;
+
+private:
+    XdgPopupGrab *m_popupGrab;
+};
+
+class XdgPopupPointerGrab : public PointerGrab
+{
+    Q_OBJECT
+
+public:
+    XdgPopupPointerGrab(XdgPopupGrab *grab, SeatInterface *seat);
+
+    void cancel() override;
+
+    void handleFocusChange(SurfaceInterface *surface, const QPointF &position, quint32 serial) override;
+    void handlePressed(quint32 button, quint32 serial) override;
+    void handleReleased(quint32 button, quint32 serial) override;
+    void handleAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source) override;
+    void handleMotion(const QPointF &position) override;
+    void handleFrame() override;
+
+private:
+    XdgPopupGrab *m_popupGrab;
+};
+
+class XdgPopupGrab
+{
+public:
+    explicit XdgPopupGrab(SeatInterface *seat, ClientConnection *client);
+    ~XdgPopupGrab();
+
+    void addPopup(XdgPopupInterface *popup);
+    void removePopup(XdgPopupInterface *popup);
+
+    SeatInterface *seat() const;
+    ClientConnection *client() const;
+
+    void cancel();
+
+    QStack<XdgPopupInterface *> stack;
+    QScopedPointer<XdgPopupPointerGrab> pointerGrab;
+    QScopedPointer<XdgPopupKeyboardGrab> keyboardGrab;
+    QScopedPointer<XdgPopupTouchGrab> touchGrab;
+    ClientConnection *m_client;
 };
 
 } // namespace KWaylandServer

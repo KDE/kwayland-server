@@ -114,6 +114,25 @@ void XdgShellInterfacePrivate::xdg_wm_base_pong(Resource *resource, uint32_t ser
     }
 }
 
+XdgPopupGrab *XdgShellInterfacePrivate::getOrCreatePopupGrab(SeatInterface *seat, ClientConnection *client)
+{
+    for (XdgPopupGrab *grab : qAsConst(grabs)) {
+        if (grab->seat() == seat && grab->client() == client) {
+            return grab;
+        }
+    }
+
+    XdgPopupGrab *grab = new XdgPopupGrab(seat, client);
+    grabs.append(grab);
+
+    return grab;
+}
+
+void XdgShellInterfacePrivate::destroyPopupGrab(XdgPopupGrab *grab)
+{
+    grabs.removeOne(grab);
+}
+
 XdgShellInterface::XdgShellInterface(Display *display, QObject *parent)
     : QObject(parent)
     , d(new XdgShellInterfacePrivate(this))
@@ -684,26 +703,57 @@ void XdgPopupInterfacePrivate::reset()
 void XdgPopupInterfacePrivate::xdg_popup_destroy_resource(Resource *resource)
 {
     Q_UNUSED(resource)
+    if (popupGrab) {
+        popupGrab->removePopup(q);
+
+        if (popupGrab->stack.isEmpty()) {
+            XdgShellInterfacePrivate *shellPrivate = XdgShellInterfacePrivate::get(xdgSurface->shell());
+            shellPrivate->destroyPopupGrab(popupGrab);
+        }
+    }
+
     delete q;
 }
 
 void XdgPopupInterfacePrivate::xdg_popup_destroy(Resource *resource)
 {
-    // TODO: We need to post an error with the code XDG_WM_BASE_ERROR_NOT_THE_TOPMOST_POPUP if
-    // this popup is not the topmost grabbing popup. We most likely need a grab abstraction or
-    // something to determine whether the given popup has an explicit grab.
     wl_resource_destroy(resource->handle);
 }
 
 void XdgPopupInterfacePrivate::xdg_popup_grab(Resource *resource, ::wl_resource *seatHandle, uint32_t serial)
 {
+    Q_UNUSED(serial)
     if (xdgSurface->surface()->buffer()) {
         wl_resource_post_error(resource->handle, error_invalid_grab,
                                "xdg_surface is already mapped");
         return;
     }
+    if (!parentSurface) {
+        wl_resource_post_error(resource->handle, error_invalid_grab,
+                               "xdg_popup surface has no parent surface");
+        return;
+    }
+
     SeatInterface *seat = SeatInterface::get(seatHandle);
-    emit q->grabRequested(seat, serial);
+    if (!seat) {
+        wl_resource_post_error(resource->handle, 0, "invalid seat");
+        return;
+    }
+
+    auto shellPrivate = XdgShellInterfacePrivate::get(xdgSurface->shell());
+    popupGrab = shellPrivate->getOrCreatePopupGrab(seat, xdgSurface->surface()->client());
+
+    if (!popupGrab->stack.isEmpty()) {
+        XdgPopupInterface *topmost = popupGrab->stack.top();
+        if (topmost->xdgSurface()->surface() != parentSurface) {
+            wl_resource_post_error(shellPrivate->resourceForXdgSurface(xdgSurface)->handle,
+                                   QtWaylandServer::xdg_wm_base::error_not_the_topmost_popup,
+                                   "xdg_popup surface is not top-most");
+            return;
+        }
+    }
+
+    popupGrab->addPopup(q);
 }
 
 void XdgPopupInterfacePrivate::xdg_popup_reposition(Resource *resource, ::wl_resource *positionerResource, uint32_t token)
@@ -1061,6 +1111,174 @@ XdgPositioner XdgPositioner::get(::wl_resource *resource)
 XdgPositioner::XdgPositioner(const QSharedDataPointer<XdgPositionerData> &data)
     : d(data)
 {
+}
+
+XdgPopupKeyboardGrab::XdgPopupKeyboardGrab(XdgPopupGrab *grab, SeatInterface *seat)
+    : KeyboardGrab(seat)
+    , m_popupGrab(grab)
+{
+}
+
+void XdgPopupKeyboardGrab::cancel()
+{
+    m_popupGrab->cancel();
+}
+
+void XdgPopupKeyboardGrab::handleFocusChange(SurfaceInterface *surface, quint32 serial)
+{
+    if (surface && surface->client() == m_popupGrab->client()) {
+        seat()->keyboard()->setFocusedSurface(surface, serial);
+    }
+}
+
+void XdgPopupKeyboardGrab::handlePressEvent(quint32 keyCode)
+{
+    seat()->keyboard()->sendPressed(keyCode);
+}
+
+void XdgPopupKeyboardGrab::handleReleaseEvent(quint32 keyCode)
+{
+    seat()->keyboard()->sendReleased(keyCode);
+}
+
+void XdgPopupKeyboardGrab::handleModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
+{
+    seat()->keyboard()->sendModifiers(depressed, latched, locked, group);
+}
+
+XdgPopupTouchGrab::XdgPopupTouchGrab(XdgPopupGrab *grab, SeatInterface *seat)
+    : TouchGrab(seat)
+    , m_popupGrab(grab)
+{
+}
+
+void XdgPopupTouchGrab::cancel()
+{
+    m_popupGrab->cancel();
+}
+
+void XdgPopupTouchGrab::handleFocusChange(SurfaceInterface *surface)
+{
+    seat()->touch()->setFocusedSurface(surface);
+}
+
+void XdgPopupTouchGrab::handleDown(qint32 id, quint32 serial, const QPointF &localPos)
+{
+    seat()->touch()->sendDown(id, serial, localPos);
+}
+
+void XdgPopupTouchGrab::handleUp(qint32 id, quint32 serial)
+{
+    seat()->touch()->sendUp(id, serial);
+}
+
+void XdgPopupTouchGrab::handleFrame()
+{
+    seat()->touch()->sendFrame();
+}
+
+void XdgPopupTouchGrab::handleCancel()
+{
+    seat()->touch()->sendCancel();
+}
+
+void XdgPopupTouchGrab::handleMotion(qint32 id, const QPointF &localPos)
+{
+    seat()->touch()->sendMotion(id, localPos);
+}
+
+XdgPopupPointerGrab::XdgPopupPointerGrab(XdgPopupGrab *grab, SeatInterface *seat)
+    : PointerGrab(seat)
+    , m_popupGrab(grab)
+{
+}
+
+void XdgPopupPointerGrab::cancel()
+{
+    m_popupGrab->cancel();
+}
+
+void XdgPopupPointerGrab::handleFocusChange(SurfaceInterface *surface, const QPointF &position, quint32 serial)
+{
+    if (surface && surface->client() == m_popupGrab->client()) {
+        seat()->pointer()->setFocusedSurface(surface, position, serial);
+    } else {
+        seat()->pointer()->setFocusedSurface(nullptr, QPointF(), serial);
+    }
+}
+
+void XdgPopupPointerGrab::handlePressed(quint32 button, quint32 serial)
+{
+    if (seat()->pointer()->focusedSurface()) {
+        seat()->pointer()->sendPressed(button, serial);
+    } else {
+        m_popupGrab->cancel();
+    }
+}
+
+void XdgPopupPointerGrab::handleReleased(quint32 button, quint32 serial)
+{
+    seat()->pointer()->sendReleased(button, serial);
+}
+
+void XdgPopupPointerGrab::handleAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source)
+{
+    seat()->pointer()->sendAxis(orientation, delta, discreteDelta, source);
+}
+
+void XdgPopupPointerGrab::handleMotion(const QPointF &position)
+{
+    seat()->pointer()->sendMotion(position);
+}
+
+void XdgPopupPointerGrab::handleFrame()
+{
+    seat()->pointer()->sendFrame();
+}
+
+XdgPopupGrab::XdgPopupGrab(SeatInterface *seat, ClientConnection *client)
+    : pointerGrab(new XdgPopupPointerGrab(this, seat))
+    , keyboardGrab(new XdgPopupKeyboardGrab(this, seat))
+    , touchGrab(new XdgPopupTouchGrab(this, seat))
+    , m_client(client)
+{
+    pointerGrab->setActive(true);
+    touchGrab->setActive(true);
+    keyboardGrab->setActive(true);
+}
+
+XdgPopupGrab::~XdgPopupGrab()
+{
+    touchGrab->setActive(false);
+    keyboardGrab->setActive(false);
+    pointerGrab->setActive(false);
+}
+
+SeatInterface *XdgPopupGrab::seat() const
+{
+    return keyboardGrab->seat();
+}
+
+ClientConnection *XdgPopupGrab::client() const
+{
+    return m_client;
+}
+
+void XdgPopupGrab::addPopup(XdgPopupInterface *popup)
+{
+    stack.append(popup);
+}
+
+void XdgPopupGrab::removePopup(XdgPopupInterface *popup)
+{
+    stack.removeOne(popup);
+}
+
+void XdgPopupGrab::cancel()
+{
+    for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
+        (*it)->sendPopupDone();
+    }
 }
 
 } // namespace KWaylandServer

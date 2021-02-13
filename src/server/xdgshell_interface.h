@@ -552,7 +552,6 @@ Q_SIGNALS:
      * be configured. After initializing the popup, you must send a configure event.
      */
     void initializeRequested();
-    void grabRequested(SeatInterface *seat, quint32 serial);
     void repositionRequested(quint32 token);
 
 private:
