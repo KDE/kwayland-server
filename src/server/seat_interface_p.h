@@ -68,6 +68,10 @@ public:
     AbstractDataSource *currentSelection = nullptr;
     AbstractDataSource *currentPrimarySelection = nullptr;
 
+    QPointer<PointerGrab> pointerGrab;
+    QPointer<KeyboardGrab> keyboardGrab;
+    QPointer<TouchGrab> touchGrab;
+
     // Pointer related members
     struct Pointer {
         enum class State {

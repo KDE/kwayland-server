@@ -9,6 +9,7 @@ set(SERVER_LIB_SRCS
     datacontroldevice_v1_interface.cpp
     datacontroldevicemanager_v1_interface.cpp
     datacontroloffer_v1_interface.cpp
+    grabs.cpp
     datacontrolsource_v1_interface.cpp
     datadevice_interface.cpp
     datadevicemanager_interface.cpp
@@ -330,6 +331,7 @@ set(SERVER_LIB_HEADERS
   eglstream_controller_interface.h
   fakeinput_interface.h
   filtered_display.h
+  grabs.h
   global.h
   idle_interface.h
   idleinhibit_v1_interface.h

@@ -28,6 +28,9 @@ class Display;
 class SurfaceInterface;
 class TextInputV2Interface;
 class TextInputV3Interface;
+class PointerGrab;
+class KeyboardGrab;
+class TouchGrab;
 
 /**
  * Describes the source types for axis events. This indicates to the
@@ -652,6 +655,15 @@ public:
     void setSelection(AbstractDataSource *selection);
 
     void setPrimarySelection(AbstractDataSource *selection);
+
+    void setPointerGrab(PointerGrab *grab);
+    PointerGrab *pointerGrab() const;
+
+    void setKeyboardGrab(KeyboardGrab *grab);
+    KeyboardGrab *keyboardGrab() const;
+
+    void setTouchGrab(TouchGrab *grab);
+    TouchGrab *touchGrab() const;
 
     static SeatInterface *get(wl_resource *native);
 

@@ -35,6 +35,7 @@
 #if HAVE_LINUX_INPUT_H
 #include <linux/input.h>
 #endif
+#include "grabs.h"
 
 #include <functional>
 
@@ -1469,6 +1470,42 @@ AbstractDataSource *SeatInterface::selection() const
 {
     Q_D();
     return d->currentSelection;
+}
+
+void SeatInterface::setPointerGrab(PointerGrab *grab)
+{
+    Q_D();
+    d->pointerGrab = grab;
+}
+
+PointerGrab *SeatInterface::pointerGrab() const
+{
+    Q_D();
+    return d->pointerGrab.data();
+}
+
+void SeatInterface::setKeyboardGrab(KeyboardGrab *grab)
+{
+    Q_D();
+    d->keyboardGrab = grab;
+}
+
+KeyboardGrab *SeatInterface::keyboardGrab() const
+{
+    Q_D();
+    return d->keyboardGrab.data();
+}
+
+void SeatInterface::setTouchGrab(TouchGrab *grab)
+{
+    Q_D();
+    d->touchGrab = grab;
+}
+
+TouchGrab *SeatInterface::touchGrab() const
+{
+    Q_D();
+    return d->touchGrab.data();
 }
 
 void SeatInterface::setSelection(AbstractDataSource *selection)
