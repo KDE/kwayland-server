@@ -305,7 +305,7 @@ void TestDragAndDrop::testTouchDragAndDrop()
     QVERIFY(pointAddedSpy.isValid());
     m_seatInterface->setFocusedTouchSurface(serverSurface);
     m_seatInterface->setTimestamp(2);
-    const qint32 touchId = m_seatInterface->touchDown(QPointF(50,50));
+    const qint32 touchId = m_seatInterface->sendTouchDownEvent(QPointF(50,50));
     QVERIFY(sequenceStartedSpy.wait());
 
     QScopedPointer<TouchPoint> tp(sequenceStartedSpy.first().at(0).value<TouchPoint*>());
@@ -355,7 +355,7 @@ void TestDragAndDrop::testTouchDragAndDrop()
 
     // simulate motion
     m_seatInterface->setTimestamp(3);
-    m_seatInterface->touchMove(touchId, QPointF(75, 75));
+    m_seatInterface->sendTouchMotionEvent(touchId, QPointF(75, 75));
     QVERIFY(dragMotionSpy.wait());
     QCOMPARE(dragMotionSpy.count(), 1);
     QCOMPARE(dragMotionSpy.first().first().toPointF(), QPointF(75, 75));
@@ -367,7 +367,7 @@ void TestDragAndDrop::testTouchDragAndDrop()
     QSignalSpy droppedSpy(m_dataDevice, &DataDevice::dropped);
     QVERIFY(droppedSpy.isValid());
     m_seatInterface->setTimestamp(4);
-    m_seatInterface->touchUp(touchId);
+    m_seatInterface->sendTouchUpEvent(touchId);
     QVERIFY(sourceDropSpy.isEmpty());
     QVERIFY(droppedSpy.wait());
     QCOMPARE(sourceDropSpy.count(), 1);

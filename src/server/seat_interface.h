@@ -566,11 +566,11 @@ public:
     TouchInterface *touch() const;
     void setFocusedTouchSurfacePosition(const QPointF &surfacePosition);
     QPointF focusedTouchSurfacePosition() const;
-    qint32 touchDown(const QPointF &globalPosition);
-    void touchUp(qint32 id);
-    void touchMove(qint32 id, const QPointF &globalPosition);
-    void touchFrame();
-    void cancelTouchSequence();
+    qint32 sendTouchDownEvent(const QPointF &globalPosition);
+    void sendTouchUpEvent(qint32 id);
+    void sendTouchMotionEvent(qint32 id, const QPointF &globalPosition);
+    void sendTouchFrameEvent();
+    void sendTouchCancelEvent();
     bool isTouchSequence() const;
     /**
      * @returns true if there is a touch sequence going on associated with a touch

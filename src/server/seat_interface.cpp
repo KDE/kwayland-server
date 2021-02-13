@@ -622,7 +622,7 @@ void SeatInterface::setDragTarget(SurfaceInterface *surface, const QPointF &glob
         setPointerPos(globalPosition);
     } else if (d->drag.mode == Private::Drag::Mode::Touch &&
                d->globalTouch.focus.firstTouchPos != globalPosition) {
-        touchMove(d->globalTouch.ids.first(), globalPosition);
+        sendTouchMotionEvent(d->globalTouch.ids.first(), globalPosition);
     }
     if (d->drag.target) {
         d->drag.surface = surface;
@@ -1044,7 +1044,7 @@ void SeatInterface::sendKeyModifiers(quint32 depressed, quint32 latched, quint32
     d->keyboard->sendModifiers(depressed, latched, locked, group);
 }
 
-void SeatInterface::cancelTouchSequence()
+void SeatInterface::sendTouchCancelEvent()
 {
     Q_D();
     d->touch->sendCancel();
@@ -1113,7 +1113,7 @@ void SeatInterface::setFocusedTouchSurfacePosition(const QPointF &surfacePositio
     d->globalTouch.focus.offset = surfacePosition;
 }
 
-qint32 SeatInterface::touchDown(const QPointF &globalPosition)
+qint32 SeatInterface::sendTouchDownEvent(const QPointF &globalPosition)
 {
     Q_D();
     const qint32 id = d->globalTouch.ids.isEmpty() ? 0 : d->globalTouch.ids.lastKey() + 1;
@@ -1143,7 +1143,7 @@ qint32 SeatInterface::touchDown(const QPointF &globalPosition)
     return id;
 }
 
-void SeatInterface::touchMove(qint32 id, const QPointF &globalPosition)
+void SeatInterface::sendTouchMotionEvent(qint32 id, const QPointF &globalPosition)
 {
     Q_D();
     Q_ASSERT(d->globalTouch.ids.contains(id));
@@ -1166,7 +1166,7 @@ void SeatInterface::touchMove(qint32 id, const QPointF &globalPosition)
     emit touchMoved(id, d->globalTouch.ids[id], globalPosition);
 }
 
-void SeatInterface::touchUp(qint32 id)
+void SeatInterface::sendTouchUpEvent(qint32 id)
 {
     Q_D();
     Q_ASSERT(d->globalTouch.ids.contains(id));
@@ -1194,7 +1194,7 @@ void SeatInterface::touchUp(qint32 id)
     d->globalTouch.ids.remove(id);
 }
 
-void SeatInterface::touchFrame()
+void SeatInterface::sendTouchFrameEvent()
 {
     Q_D();
     d->touch->sendFrame();
