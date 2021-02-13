@@ -224,12 +224,12 @@ void TestPointerConstraints::testLockPointer()
     m_seatInterface->setFocusedPointerSurface(serverSurface);
     QSignalSpy pointerMotionSpy(m_pointer, &Pointer::motion);
     QVERIFY(pointerMotionSpy.isValid());
-    m_seatInterface->setPointerPos(QPoint(0, 1));
+    m_seatInterface->sendPointerMotionEvent(QPoint(0, 1));
     QVERIFY(pointerMotionSpy.wait());
 
     serverLockedPointer->setLocked(true);
     QCOMPARE(serverLockedPointer->isLocked(), true);
-    m_seatInterface->setPointerPos(QPoint(1, 1));
+    m_seatInterface->sendPointerMotionEvent(QPoint(1, 1));
     QCOMPARE(lockedChangedSpy.count(), 1);
     QCOMPARE(pointerMotionSpy.count(), 1);
     QVERIFY(lockedSpy.isEmpty());
@@ -256,7 +256,7 @@ void TestPointerConstraints::testLockPointer()
     QCOMPARE(lockedSpy.count(), 1);
 
     // now motion should work again
-    m_seatInterface->setPointerPos(QPoint(0, 1));
+    m_seatInterface->sendPointerMotionEvent(QPoint(0, 1));
     QVERIFY(pointerMotionSpy.wait());
     QCOMPARE(pointerMotionSpy.count(), 2);
 

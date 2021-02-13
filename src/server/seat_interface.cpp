@@ -543,7 +543,7 @@ QPointF SeatInterface::pointerPos() const
     return d->globalPointer.pos;
 }
 
-void SeatInterface::setPointerPos(const QPointF &pos)
+void SeatInterface::sendPointerMotionEvent(const QPointF &pos)
 {
     Q_D();
     if (d->globalPointer.pos == pos) {
@@ -619,7 +619,7 @@ void SeatInterface::setDragTarget(SurfaceInterface *surface, const QPointF &glob
     }
 
     if (d->drag.mode == Private::Drag::Mode::Pointer) {
-        setPointerPos(globalPosition);
+        sendPointerMotionEvent(globalPosition);
     } else if (d->drag.mode == Private::Drag::Mode::Touch &&
                d->globalTouch.focus.firstTouchPos != globalPosition) {
         sendTouchMotionEvent(d->globalTouch.ids.first(), globalPosition);
@@ -789,7 +789,7 @@ bool SeatInterface::isPointerButtonPressed(quint32 button) const
     return it.value() == Private::Pointer::State::Pressed ? true : false;
 }
 
-void SeatInterface::pointerAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source)
+void SeatInterface::sendPointerAxisEvent(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source)
 {
     Q_D();
     Q_ASSERT(d->pointer);
@@ -800,16 +800,16 @@ void SeatInterface::pointerAxis(Qt::Orientation orientation, qreal delta, qint32
     d->pointer->sendAxis(orientation, delta, discreteDelta, source);
 }
 
-void SeatInterface::pointerButtonPressed(Qt::MouseButton button)
+void SeatInterface::sendPointerPressEvent(Qt::MouseButton button)
 {
     const quint32 nativeButton = qtToWaylandButton(button);
     if (nativeButton == 0) {
         return;
     }
-    pointerButtonPressed(nativeButton);
+    sendPointerPressEvent(nativeButton);
 }
 
-void SeatInterface::pointerButtonPressed(quint32 button)
+void SeatInterface::sendPointerPressEvent(quint32 button)
 {
     Q_D();
     Q_ASSERT(d->pointer);
@@ -829,16 +829,16 @@ void SeatInterface::pointerButtonPressed(quint32 button)
     }
 }
 
-void SeatInterface::pointerButtonReleased(Qt::MouseButton button)
+void SeatInterface::sendPointerReleaseEvent(Qt::MouseButton button)
 {
     const quint32 nativeButton = qtToWaylandButton(button);
     if (nativeButton == 0) {
         return;
     }
-    pointerButtonReleased(nativeButton);
+    sendPointerReleaseEvent(nativeButton);
 }
 
-void SeatInterface::pointerButtonReleased(quint32 button)
+void SeatInterface::sendPointerReleaseEvent(quint32 button)
 {
     Q_D();
     Q_ASSERT(d->pointer);
@@ -857,7 +857,7 @@ void SeatInterface::pointerButtonReleased(quint32 button)
     d->pointer->sendReleased(button, serial);
 }
 
-void SeatInterface::pointerFrame()
+void SeatInterface::sendPointerFrameEvent()
 {
     Q_D();
     Q_ASSERT(d->pointer);
