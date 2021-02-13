@@ -292,6 +292,11 @@ SurfaceInterface *SubSurfaceInterface::parentSurface() const
     return d->parent;
 }
 
+SubSurfaceInterface *SubSurfaceInterface::parentSubSurface() const
+{
+    return d->parent ? d->parent->subSurface() : nullptr;
+}
+
 SubSurfaceInterface::Mode SubSurfaceInterface::mode() const
 {
     return d->mode;
@@ -324,6 +329,17 @@ SurfaceInterface *SubSurfaceInterface::mainSurface() const
         return parentPrivate->subSurface->mainSurface();
     }
     return d->parent;
+}
+
+QPoint SubSurfaceInterface::mainPosition() const
+{
+    QPoint result = position();
+    SubSurfaceInterface *parent = parentSubSurface();
+    while (parent) {
+        result += parent->position();
+        parent = parent->parentSubSurface();
+    }
+    return result;
 }
 
 } // namespace KWaylandServer

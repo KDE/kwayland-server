@@ -61,6 +61,7 @@ public:
      * Returns the position of the sub-surface relative to the upper-left corner of its parent.
      */
     QPoint position() const;
+    QPoint mainPosition() const;
 
     /**
      * This enum type is used to specify the commit behavior for a subsurface.
@@ -98,6 +99,7 @@ public:
      * Returns the parent surface for this SubSurfaceInterface. This function may return @c null.
      */
     SurfaceInterface *parentSurface() const;
+    SubSurfaceInterface *parentSubSurface() const;
 
     /**
      * Returns the main surface for the sub-surface tree, that is the first surface without a parent
