@@ -5,6 +5,7 @@
 */
 
 #include "xdgshell_interface.h"
+#include "grabs.h"
 #include "xdgshell_interface_p.h"
 
 #include "display.h"
@@ -1061,6 +1062,82 @@ XdgPositioner XdgPositioner::get(::wl_resource *resource)
 XdgPositioner::XdgPositioner(const QSharedDataPointer<XdgPositionerData> &data)
     : d(data)
 {
+}
+
+XdgPopupGrab::XdgPopupGrab(SeatInterface *parent) : KeyboardGrab(parent), m_seat(parent)
+{
+
+}
+
+bool XdgPopupGrab::keyEvent(QKeyEvent *event)
+{
+    if (m_grabStack.isEmpty()) return false;
+    if (event->isAutoRepeat()) return true;
+
+    m_seat->setFocusedKeyboardSurface(m_grabStack.last()->surface());
+
+    switch (event->type()) {
+    case QEvent::KeyPress:
+        m_seat->keyboard()->keyPressed(event->nativeScanCode());
+        break;
+    case QEvent::KeyRelease:
+        m_seat->keyboard()->keyReleased(event->nativeScanCode());
+        break;
+    default:
+        break;
+    }
+
+    return true;
+}
+
+void XdgPopupGrab::popupDestroyed(QObject *iface)
+{
+    // we don't really care about accessing the pointer, only getting
+    // a pointer with the associated type. also, the object is self
+    // destructing so we can't really qobject_cast it safely.
+    m_grabStack.removeAll(reinterpret_cast<XdgPopupInterface*>(iface));
+    if (m_grabStack.length() == 0) {
+        m_seat->setKeyboardGrab(nullptr);
+        this->deleteLater();
+    }
+}
+
+void XdgPopupGrab::grabPopup(XdgPopupInterface* popup)
+{
+    if (m_grabStack.length() == 0) {
+        // TODO:
+        // We're supposed to check for whether the popup's parent is a toplevel,
+        // but a bunch of design choices (both protocol and this codebase)
+        // compounded to where doing that is infeasible.
+        //
+        // Let's hope clients are well-behaved.
+        m_grabStack << popup;
+        QObject::connect(popup, &QObject::destroyed, this, &XdgPopupGrab::popupDestroyed );
+    } else {
+        if (m_grabStack.last()->surface() == popup->parentSurface()) {
+            m_grabStack << popup;
+            QObject::connect(popup, &QObject::destroyed, this, &XdgPopupGrab::popupDestroyed );
+        } else {
+            wl_resource_post_error(popup->surface()->resource(), QtWaylandServer::xdg_popup::error_invalid_grab, "cannot grab; parent popup does not have grab");
+            return;
+        }
+    }
+}
+
+void XdgPopupGrab::ungrabPopup(XdgPopupInterface* popup)
+{
+    if (!(m_grabStack.length() > 0)) {
+        qCritical() << "Tried to ungrab a popup with an empty grab stack";
+    }
+    if (!(m_grabStack.last() == popup)) {
+        qCritical() << "Tried to ungrab a popup that wasn't the topmost popup";
+    }
+    QObject::disconnect(popup, &QObject::destroyed, this, &XdgPopupGrab::popupDestroyed);
+    m_grabStack.removeAll(popup);
+    if (m_grabStack.length() == 0) {
+        m_seat->setKeyboardGrab(nullptr);
+        delete this;
+    }
 }
 
 } // namespace KWaylandServer

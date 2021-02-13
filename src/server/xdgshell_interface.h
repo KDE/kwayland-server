@@ -11,6 +11,8 @@
 #include <QObject>
 #include <QSharedDataPointer>
 
+#include "grabs.h"
+
 struct wl_resource;
 
 namespace KWaylandServer
@@ -558,6 +560,26 @@ Q_SIGNALS:
 private:
     QScopedPointer<XdgPopupInterfacePrivate> d;
     friend class XdgPopupInterfacePrivate;
+};
+
+class KWAYLANDSERVER_EXPORT XdgPopupGrab : public KeyboardGrab
+{
+    Q_OBJECT
+
+    QList<XdgPopupInterface*> m_grabStack;
+    SeatInterface* m_seat;
+
+public:
+    XdgPopupGrab(SeatInterface *parent = nullptr);
+    ~XdgPopupGrab() {}
+
+    bool keyEvent(QKeyEvent *event) override;
+    void popupDestroyed(QObject *iface);
+
+    void grabPopup(XdgPopupInterface* popup);
+    void ungrabPopup(XdgPopupInterface* popup);
+
+    XdgPopupInterface* toplevelPopup() { return m_grabStack.last(); }
 };
 
 } // namespace KWaylandServer
