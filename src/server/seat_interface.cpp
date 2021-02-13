@@ -1140,6 +1140,27 @@ KeyboardInterface *SeatInterface::keyboard() const
     return d->keyboard.data();
 }
 
+void SeatInterface::sendKeyPressEvent(quint32 key)
+{
+    Q_D();
+    Q_ASSERT(d->keyboard);
+    d->keyboard->sendPressed(key);
+}
+
+void SeatInterface::sendKeyReleaseEvent(quint32 key)
+{
+    Q_D();
+    Q_ASSERT(d->keyboard);
+    d->keyboard->sendReleased(key);
+}
+
+void SeatInterface::sendKeyModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
+{
+    Q_D();
+    Q_ASSERT(d->keyboard);
+    d->keyboard->sendModifiers(depressed, latched, locked, group);
+}
+
 void SeatInterface::cancelTouchSequence()
 {
     Q_D();

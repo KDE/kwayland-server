@@ -556,7 +556,10 @@ public:
     void setFocusedKeyboardSurface(SurfaceInterface *surface);
     SurfaceInterface *focusedKeyboardSurface() const;
     KeyboardInterface *keyboard() const;
-    ///@}
+
+    void sendKeyPressEvent(quint32 key);
+    void sendKeyReleaseEvent(quint32 key);
+    void sendKeyModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group);
 
     /**
      * @name  touch related methods
