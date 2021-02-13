@@ -139,6 +139,9 @@ void KeyboardInterfacePrivate::sendModifiers()
 void KeyboardInterface::setFocusedSurface(SurfaceInterface *surface, quint32 serial)
 {
     SeatInterface::Private *seatPrivate = d->seat->d_func();
+    if (d->focusedSurface == surface) {
+        return;
+    }
 
     if (d->focusedSurface) {
         d->sendLeave(d->focusedSurface, serial);
