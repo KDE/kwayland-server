@@ -402,8 +402,11 @@ void SeatInterface::setHasKeyboard(bool has)
     }
     if (has) {
         d->keyboard.reset(new KeyboardInterface(this));
+        d->defaultKeyboardGrab.reset(new ForwardKeyboardGrab(this));
+        d->defaultKeyboardGrab->setActive(true);
     } else {
         d->keyboard.reset();
+        d->clearKeyboardGrab();
     }
 
     d->sendCapabilities();
@@ -417,8 +420,11 @@ void SeatInterface::setHasPointer(bool has)
     }
     if (has) {
         d->pointer.reset(new PointerInterface(this));
+        d->defaultPointerGrab.reset(new ForwardPointerGrab(this));
+        d->defaultPointerGrab->setActive(true);
     } else {
         d->pointer.reset();
+        d->clearPointerGrab();
     }
 
     d->sendCapabilities();
@@ -432,8 +438,11 @@ void SeatInterface::setHasTouch(bool has)
     }
     if (has) {
         d->touch.reset(new TouchInterface(this));
+        d->defaultTouchGrab.reset(new ForwardTouchGrab(this));
+        d->defaultTouchGrab->setActive(true);
     } else {
         d->touch.reset();
+        d->clearTouchGrab();
     }
 
     d->sendCapabilities();
@@ -482,6 +491,129 @@ Display *SeatInterface::display() const
     return d->display;
 }
 
+PointerGrab *SeatInterface::pointerGrab() const
+{
+    return d->pointerGrab;
+}
+
+PointerGrab *SeatInterface::defaultPointerGrab() const
+{
+    return d->defaultPointerGrab.data();
+}
+
+KeyboardGrab *SeatInterface::keyboardGrab() const
+{
+    return d->keyboardGrab;
+}
+
+KeyboardGrab *SeatInterface::defaultKeyboardGrab() const
+{
+    return d->defaultKeyboardGrab.data();
+}
+
+TouchGrab *SeatInterface::touchGrab() const
+{
+    return d->touchGrab;
+}
+
+TouchGrab *SeatInterface::defaultTouchGrab() const
+{
+    return d->defaultTouchGrab.data();
+}
+
+void SeatInterfacePrivate::grabKeyboard(KeyboardGrab *grab)
+{
+    KeyboardGrab *oldGrab = keyboardGrab;
+    keyboardGrab = grab;
+
+    if (oldGrab) {
+        oldGrab->cancel();
+        oldGrab->deactivate();
+    }
+    keyboardGrab->activate();
+}
+
+void SeatInterfacePrivate::ungrabKeyboard(KeyboardGrab *grab)
+{
+    if (keyboardGrab != grab) {
+        return;
+    }
+    keyboardGrab->deactivate();
+    keyboardGrab = defaultKeyboardGrab.data();
+    keyboardGrab->activate();
+}
+
+void SeatInterfacePrivate::grabTouch(TouchGrab *grab)
+{
+    TouchGrab *oldGrab = touchGrab;
+    touchGrab = grab;
+
+    if (oldGrab) {
+        oldGrab->cancel();
+        oldGrab->deactivate();
+    }
+    touchGrab->activate();
+}
+
+void SeatInterfacePrivate::ungrabTouch(TouchGrab *grab)
+{
+    if (touchGrab != grab) {
+        return;
+    }
+    touchGrab->deactivate();
+    touchGrab = defaultTouchGrab.data();
+    touchGrab->activate();
+}
+
+void SeatInterfacePrivate::grabPointer(PointerGrab *grab)
+{
+    PointerGrab *oldGrab = pointerGrab;
+    pointerGrab = grab;
+
+    if (oldGrab) {
+        oldGrab->cancel();
+        oldGrab->deactivate();
+    }
+    pointerGrab->activate();
+}
+
+void SeatInterfacePrivate::ungrabPointer(PointerGrab *grab)
+{
+    if (pointerGrab != grab) {
+        return;
+    }
+    pointerGrab->deactivate();
+    pointerGrab = defaultPointerGrab.data();
+    pointerGrab->activate();
+}
+
+void SeatInterfacePrivate::clearKeyboardGrab()
+{
+    keyboardGrab->cancel();
+    keyboardGrab->deactivate();
+
+    keyboardGrab = nullptr;
+    defaultKeyboardGrab.reset();
+}
+
+void SeatInterfacePrivate::clearTouchGrab()
+{
+    touchGrab->cancel();
+    touchGrab->deactivate();
+
+    touchGrab = nullptr;
+    defaultTouchGrab.reset();
+}
+
+void SeatInterfacePrivate::clearPointerGrab()
+{
+    pointerGrab->cancel();
+    pointerGrab->deactivate();
+
+    pointerGrab = nullptr;
+    defaultPointerGrab.reset();
+}
+
 SeatInterface *SeatInterface::get(wl_resource *native)
 {
     if (SeatInterfacePrivate *seatPrivate = resource_cast<SeatInterfacePrivate *>(native)) {
@@ -525,10 +657,10 @@ void SeatInterface::sendPointerMotionEvent(const QPointF &pos)
     }
 
     if (d->pointer->focusedSurface() != effectiveFocusedSurface) {
-        d->pointer->setFocusedSurface(effectiveFocusedSurface, localPosition, d->display->nextSerial());
+        d->pointerGrab->handleFocusChange(effectiveFocusedSurface, localPosition, d->display->nextSerial());
     }
 
-    d->pointer->sendMotion(localPosition);
+    d->pointerGrab->handleMotion(localPosition);
     emit pointerPosChanged(pos);
 }
 
@@ -645,9 +777,9 @@ void SeatInterface::setFocusedPointerSurface(SurfaceInterface *surface, const QM
         if (SubSurfaceInterface *subsurface = effectiveFocusedSurface->subSurface()) {
             localPosition -= subsurface->mainPosition();
         }
-        d->pointer->setFocusedSurface(effectiveFocusedSurface, localPosition, serial);
+        d->pointerGrab->handleFocusChange(effectiveFocusedSurface, localPosition, serial);
     } else {
-        d->pointer->setFocusedSurface(nullptr, QPointF(), serial);
+        d->pointerGrab->handleFocusChange(nullptr, QPointF(), serial);
     }
 }
 
@@ -733,7 +865,7 @@ void SeatInterface::sendPointerAxisEvent(Qt::Orientation orientation, qreal delt
         // ignore
         return;
     }
-    d->pointer->sendAxis(orientation, delta, discreteDelta, source);
+    d->pointerGrab->handleAxis(orientation, delta, discreteDelta, source);
 }
 
 void SeatInterface::sendPointerPressEvent(Qt::MouseButton button)
@@ -755,11 +887,11 @@ void SeatInterface::sendPointerPressEvent(quint32 button)
         // ignore
         return;
     }
-    d->pointer->sendPressed(button, serial);
+    d->pointerGrab->handlePressed(button, serial);
 
     if (focusedPointerSurface() == focusedKeyboardSurface()) {
         if (d->keyboard) {
-            d->keyboard->setFocusedSurface(d->pointer->focusedSurface(), serial);
+            d->keyboardGrab->handleFocusChange(d->pointer->focusedSurface(), serial);
         }
     }
 }
@@ -788,13 +920,13 @@ void SeatInterface::sendPointerReleaseEvent(quint32 button)
         d->endDrag(serial);
         return;
     }
-    d->pointer->sendReleased(button, serial);
+    d->pointerGrab->handleReleased(button, serial);
 }
 
 void SeatInterface::sendPointerFrameEvent()
 {
     Q_ASSERT(d->pointer);
-    d->pointer->sendFrame();
+    d->pointerGrab->handleFrame();
 }
 
 quint32 SeatInterface::pointerButtonSerial(Qt::MouseButton button) const
@@ -927,7 +1059,7 @@ void SeatInterface::setFocusedKeyboardSurface(SurfaceInterface *surface)
         d->globalKeyboard.focus.serial = serial;
     }
 
-    d->keyboard->setFocusedSurface(surface, serial);
+    d->keyboardGrab->handleFocusChange(surface, serial);
 
     // focused text input surface follows keyboard
     if (hasKeyboard()) {
@@ -943,24 +1075,24 @@ KeyboardInterface *SeatInterface::keyboard() const
 void SeatInterface::sendKeyPressEvent(quint32 key)
 {
     Q_ASSERT(d->keyboard);
-    d->keyboard->sendPressed(key);
+    d->keyboardGrab->handlePressEvent(key);
 }
 
 void SeatInterface::sendKeyReleaseEvent(quint32 key)
 {
     Q_ASSERT(d->keyboard);
-    d->keyboard->sendReleased(key);
+    d->keyboardGrab->handleReleaseEvent(key);
 }
 
 void SeatInterface::sendKeyModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
 {
     Q_ASSERT(d->keyboard);
-    d->keyboard->sendModifiers(depressed, latched, locked, group);
+    d->keyboardGrab->handleModifiers(depressed, latched, locked, group);
 }
 
 void SeatInterface::sendTouchCancelEvent()
 {
-    d->touch->sendCancel();
+    d->touchGrab->handleCancel();
 
     if (d->drag.mode == SeatInterfacePrivate::Drag::Mode::Touch) {
         // cancel the drag, don't drop. serial does not matter
@@ -1006,12 +1138,12 @@ void SeatInterface::setFocusedTouchSurface(SurfaceInterface *surface, const QPoi
         d->globalTouch.focus.destroyConnection = connect(surface, &QObject::destroyed, this, [this] {
             if (isTouchSequence()) {
                 // Surface destroyed during touch sequence - send a cancel
-                d->touch->sendCancel();
+                d->touchGrab->handleCancel();
             }
             d->globalTouch.focus = SeatInterfacePrivate::Touch::Focus();
         });
     }
-    d->touch->setFocusedSurface(surface);
+    d->touchGrab->handleFocusChange(surface);
 }
 
 void SeatInterface::setFocusedTouchSurfacePosition(const QPointF &surfacePosition)
@@ -1024,7 +1156,7 @@ qint32 SeatInterface::sendTouchDownEvent(const QPointF &globalPosition)
     const qint32 id = d->globalTouch.ids.isEmpty() ? 0 : d->globalTouch.ids.lastKey() + 1;
     const qint32 serial = d->display->nextSerial();
     const auto pos = globalPosition - d->globalTouch.focus.offset;
-    d->touch->sendDown(id, serial, pos);
+    d->touchGrab->handleDown(id, serial, pos);
 
     if (id == 0) {
         d->globalTouch.focus.firstTouchPos = globalPosition;
@@ -1037,9 +1169,9 @@ qint32 SeatInterface::sendTouchDownEvent(const QPointF &globalPosition)
         if (touchPrivate->touchesForClient(focusedTouchSurface()->client()).isEmpty()) {
             // If the client did not bind the touch interface fall back
             // to at least emulating touch through pointer events.
-            d->pointer->setFocusedSurface(focusedTouchSurface(), pos, serial);
-            d->pointer->sendMotion(pos);
-            d->pointer->sendFrame();
+            d->pointerGrab->handleFocusChange(focusedTouchSurface(), pos, serial);
+            d->pointerGrab->handleMotion(pos);
+            d->pointerGrab->handleFrame();
         }
     }
 #endif
@@ -1052,7 +1184,7 @@ void SeatInterface::sendTouchMotionEvent(qint32 id, const QPointF &globalPositio
 {
     Q_ASSERT(d->globalTouch.ids.contains(id));
     const auto pos = globalPosition - d->globalTouch.focus.offset;
-    d->touch->sendMotion(id, pos);
+    d->touchGrab->handleMotion(id, pos);
 
     if (id == 0) {
         d->globalTouch.focus.firstTouchPos = globalPosition;
@@ -1062,8 +1194,8 @@ void SeatInterface::sendTouchMotionEvent(qint32 id, const QPointF &globalPositio
             TouchInterfacePrivate *touchPrivate = TouchInterfacePrivate::get(d->touch.data());
             if (touchPrivate->touchesForClient(focusedTouchSurface()->client()).isEmpty()) {
                 // Client did not bind touch, fall back to emulating with pointer events.
-                d->pointer->sendMotion(pos);
-                d->pointer->sendFrame();
+                d->pointerGrab->handleMotion(pos);
+                d->pointerGrab->handleFrame();
             }
         }
     }
@@ -1079,7 +1211,7 @@ void SeatInterface::sendTouchUpEvent(qint32 id)
         // the implicitly grabbing touch point has been upped
         d->endDrag(serial);
     }
-    d->touch->sendUp(id, serial);
+    d->touchGrab->handleUp(id, serial);
 
 #if HAVE_LINUX_INPUT_H
     if (id == 0 && hasPointer() && focusedTouchSurface()) {
@@ -1088,8 +1220,8 @@ void SeatInterface::sendTouchUpEvent(qint32 id)
         if (touchPrivate->touchesForClient(focusedTouchSurface()->client()).isEmpty()) {
             // Client did not bind touch, fall back to emulating with pointer events.
             const quint32 serial = d->display->nextSerial();
-            d->pointer->sendReleased(BTN_LEFT, serial);
-            d->pointer->sendFrame();
+            d->pointerGrab->handleReleased(BTN_LEFT, serial);
+            d->pointerGrab->handleFrame();
         }
     }
 #endif
@@ -1099,7 +1231,7 @@ void SeatInterface::sendTouchUpEvent(qint32 id)
 
 void SeatInterface::sendTouchFrameEvent()
 {
-    d->touch->sendFrame();
+    d->touchGrab->handleFrame();
 }
 
 bool SeatInterface::hasImplicitTouchGrab(quint32 serial) const
@@ -1275,6 +1407,113 @@ void SeatInterface::setPrimarySelection(AbstractDataSource *selection)
     }
 
     emit primarySelectionChanged(selection);
+}
+
+ForwardPointerGrab::ForwardPointerGrab(SeatInterface *seat, QObject *parent)
+    : PointerGrab(seat, parent)
+{
+}
+
+void ForwardPointerGrab::cancel()
+{
+}
+
+void ForwardPointerGrab::handleFocusChange(SurfaceInterface *surface, const QPointF &position, quint32 serial)
+{
+    seat()->pointer()->setFocusedSurface(surface, position, serial);
+}
+
+void ForwardPointerGrab::handlePressed(quint32 button, quint32 serial)
+{
+    seat()->pointer()->sendPressed(button, serial);
+}
+
+void ForwardPointerGrab::handleReleased(quint32 button, quint32 serial)
+{
+    seat()->pointer()->sendReleased(button, serial);
+}
+
+void ForwardPointerGrab::handleAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source)
+{
+    seat()->pointer()->sendAxis(orientation, delta, discreteDelta, source);
+}
+
+void ForwardPointerGrab::handleMotion(const QPointF &position)
+{
+    seat()->pointer()->sendMotion(position);
+}
+
+void ForwardPointerGrab::handleFrame()
+{
+    seat()->pointer()->sendFrame();
+}
+
+ForwardKeyboardGrab::ForwardKeyboardGrab(SeatInterface *seat, QObject *parent)
+    : KeyboardGrab(seat, parent)
+{
+}
+
+void ForwardKeyboardGrab::cancel()
+{
+}
+
+void ForwardKeyboardGrab::handleFocusChange(SurfaceInterface *surface, quint32 serial)
+{
+    seat()->keyboard()->setFocusedSurface(surface, serial);
+}
+
+void ForwardKeyboardGrab::handlePressEvent(quint32 keyCode)
+{
+    seat()->keyboard()->sendPressed(keyCode);
+}
+
+void ForwardKeyboardGrab::handleReleaseEvent(quint32 keyCode)
+{
+    seat()->keyboard()->sendReleased(keyCode);
+}
+
+void ForwardKeyboardGrab::handleModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
+{
+    seat()->keyboard()->sendModifiers(depressed, latched, locked, group);
+}
+
+ForwardTouchGrab::ForwardTouchGrab(SeatInterface *seat, QObject *parent)
+    : TouchGrab(seat, parent)
+{
+}
+
+void ForwardTouchGrab::cancel()
+{
+}
+
+void ForwardTouchGrab::handleFocusChange(SurfaceInterface *surface)
+{
+    seat()->touch()->setFocusedSurface(surface);
+}
+
+void ForwardTouchGrab::handleDown(qint32 id, quint32 serial, const QPointF &localPos)
+{
+    seat()->touch()->sendDown(id, serial, localPos);
+}
+
+void ForwardTouchGrab::handleUp(qint32 id, quint32 serial)
+{
+    seat()->touch()->sendUp(id, serial);
+}
+
+void ForwardTouchGrab::handleFrame()
+{
+    seat()->touch()->sendFrame();
+}
+
+void ForwardTouchGrab::handleCancel()
+{
+    seat()->touch()->sendCancel();
+}
+
+void ForwardTouchGrab::handleMotion(qint32 id, const QPointF &localPos)
+{
+    seat()->touch()->sendMotion(id, localPos);
 }
 
 }

@@ -8,6 +8,9 @@
 #define WAYLAND_SERVER_SEAT_INTERFACE_P_H
 // KWayland
 #include "seat_interface.h"
+#include "keyboardgrab.h"
+#include "pointergrab.h"
+#include "touchgrab.h"
 // Qt
 #include <QHash>
 #include <QMap>
@@ -27,6 +30,55 @@ class TextInputV2Interface;
 class TextInputV3Interface;
 class PrimarySelectionDeviceV1Interface;
 
+class ForwardPointerGrab final : public PointerGrab
+{
+    Q_OBJECT
+
+public:
+    explicit ForwardPointerGrab(SeatInterface *seat, QObject *parent = nullptr);
+
+    void cancel() override;
+
+    void handleFocusChange(SurfaceInterface *surface, const QPointF &position, quint32 serial) override;
+    void handlePressed(quint32 button, quint32 serial) override;
+    void handleReleased(quint32 button, quint32 serial) override;
+    void handleAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source) override;
+    void handleMotion(const QPointF &position) override;
+    void handleFrame() override;
+};
+
+class ForwardKeyboardGrab final : public KeyboardGrab
+{
+    Q_OBJECT
+
+public:
+    explicit ForwardKeyboardGrab(SeatInterface *seat, QObject *parent = nullptr);
+
+    void cancel() override;
+
+    void handleFocusChange(SurfaceInterface *surface, quint32 serial) override;
+    void handlePressEvent(quint32 keyCode) override;
+    void handleReleaseEvent(quint32 keyCode) override;
+    void handleModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group) override;
+};
+
+class ForwardTouchGrab final : public TouchGrab
+{
+    Q_OBJECT
+
+public:
+    explicit ForwardTouchGrab(SeatInterface *seat, QObject *parent = nullptr);
+
+    void cancel() override;
+
+    void handleFocusChange(SurfaceInterface *surface) override;
+    void handleDown(qint32 id, quint32 serial, const QPointF &localPos) override;
+    void handleUp(qint32 id, quint32 serial) override;
+    void handleFrame() override;
+    void handleCancel() override;
+    void handleMotion(qint32 id, const QPointF &localPos) override;
+};
+
 class SeatInterfacePrivate : public QtWaylandServer::wl_seat
 {
 public:
@@ -42,6 +94,16 @@ public:
     void cancelDrag(quint32 serial);
     quint32 nextSerial() const;
 
+    void grabKeyboard(KeyboardGrab *grab);
+    void ungrabKeyboard(KeyboardGrab *grab);
+    void grabTouch(TouchGrab *grab);
+    void ungrabTouch(TouchGrab *grab);
+    void grabPointer(PointerGrab *grab);
+    void ungrabPointer(PointerGrab *grab);
+    void clearTouchGrab();
+    void clearKeyboardGrab();
+    void clearPointerGrab();
+
     SeatInterface *q;
     Display *display;
     QString name;
@@ -53,6 +115,12 @@ public:
     QVector<DataDeviceInterface*> dataDevices;
     QVector<PrimarySelectionDeviceV1Interface*> primarySelectionDevices;
     QVector<DataControlDeviceV1Interface*> dataControlDevices;
+    PointerGrab *pointerGrab = nullptr;
+    QScopedPointer<PointerGrab> defaultPointerGrab;
+    KeyboardGrab *keyboardGrab = nullptr;
+    QScopedPointer<KeyboardGrab> defaultKeyboardGrab;
+    TouchGrab *touchGrab = nullptr;
+    QScopedPointer<TouchGrab> defaultTouchGrab;
 
     // TextInput v2
     QPointer<TextInputV2Interface> textInputV2;

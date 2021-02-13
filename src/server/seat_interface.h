@@ -26,10 +26,13 @@ namespace KWaylandServer
 class AbstractDataSource;
 class DataDeviceInterface;
 class Display;
+class KeyboardGrab;
+class PointerGrab;
 class SeatInterfacePrivate;
 class SurfaceInterface;
 class TextInputV2Interface;
 class TextInputV3Interface;
+class TouchGrab;
 
 /**
  * Describes the source types for axis events. This indicates to the
@@ -156,6 +159,15 @@ public:
 
     void setTimestamp(quint32 time);
     quint32 timestamp() const;
+
+    PointerGrab *pointerGrab() const;
+    PointerGrab *defaultPointerGrab() const;
+
+    KeyboardGrab *keyboardGrab() const;
+    KeyboardGrab *defaultKeyboardGrab() const;
+
+    TouchGrab *touchGrab() const;
+    TouchGrab *defaultTouchGrab() const;
 
     /**
      * @name Drag'n'Drop related methods
