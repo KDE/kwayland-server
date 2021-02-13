@@ -252,7 +252,6 @@ int main(int argc, char **argv)
     seat->setHasKeyboard(true);
     seat->setHasPointer(true);
     seat->setName(QStringLiteral("testSeat0"));
-    seat->create();
 
     CompositorWindow compositorWindow;
     compositorWindow.setSeat(seat);
