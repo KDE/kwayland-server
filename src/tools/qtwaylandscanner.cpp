@@ -812,12 +812,13 @@ bool Scanner::process()
             printf("        Q_ASSERT(resource);\n");
             printf("        %s *that = resource->%s_object;\n", interfaceName, interfaceNameStripped);
             printf("        if (Q_LIKELY(that)) {\n");
-            printf("            that->m_resource_map.remove(resource->client(), resource);\n");
             printf("            that->%s_destroy_resource(resource);\n", interfaceNameStripped);
             printf("\n");
             printf("            that = resource->%s_object;\n", interfaceNameStripped);
-            printf("            if (that && that->m_resource == resource)\n");
+            printf("            if (that) {\n");
             printf("                that->m_resource = nullptr;\n");
+            printf("                that->m_resource_map.remove(resource->client(), resource);\n");
+            printf("            }\n");
             printf("        }\n");
             printf("        delete resource;\n");
             printf("    }\n");
