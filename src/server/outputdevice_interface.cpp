@@ -221,6 +221,11 @@ void OutputDeviceInterface::setCurrentMode(const int modeId)
         }
     );
 
+    if (existingModeIt->flags & ModeFlag::Current) {
+        qDebug() << "setting mode that is already current";
+        return;
+    }
+
     Q_ASSERT(existingModeIt != d->modes.end());
     (*existingModeIt).flags |= ModeFlag::Current;
     d->currentMode = *existingModeIt;
