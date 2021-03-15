@@ -186,11 +186,11 @@ QVector<quint32> KeyboardInterfacePrivate::pressedKeys() const
 
 void KeyboardInterface::keyPressed(quint32 key)
 {
-    if (!d->focusedSurface) {
+    if (!d->updateKey(key, KeyboardInterfacePrivate::State::Pressed)) {
         return;
     }
 
-    if (!d->updateKey(key, KeyboardInterfacePrivate::State::Pressed)) {
+    if (!d->focusedSurface) {
         return;
     }
 
@@ -203,11 +203,11 @@ void KeyboardInterface::keyPressed(quint32 key)
 
 void KeyboardInterface::keyReleased(quint32 key)
 {
-    if (!d->focusedSurface) {
+    if (!d->updateKey(key, KeyboardInterfacePrivate::State::Released)) {
         return;
     }
 
-    if (!d->updateKey(key, KeyboardInterfacePrivate::State::Released)) {
+    if (!d->focusedSurface) {
         return;
     }
 
