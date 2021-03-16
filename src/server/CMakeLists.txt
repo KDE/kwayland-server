@@ -19,6 +19,7 @@ set(SERVER_LIB_SRCS
     eglstream_controller_interface.cpp
     fakeinput_interface.cpp
     filtered_display.cpp
+    fullscreenshell_v1_interface.cpp
     global.cpp
     idle_interface.cpp
     idleinhibit_v1_interface
@@ -245,6 +246,11 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
 )
 
 ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
+    PROTOCOL ${WaylandProtocols_DATADIR}/unstable/fullscreen-shell/fullscreen-shell-unstable-v1.xml
+    BASENAME fullscreen-shell-unstable-v1
+)
+
+ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     PROTOCOL ${WaylandProtocols_DATADIR}/unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml
     BASENAME keyboard-shortcuts-inhibit-unstable-v1
 )
@@ -330,6 +336,7 @@ set(SERVER_LIB_HEADERS
   eglstream_controller_interface.h
   fakeinput_interface.h
   filtered_display.h
+  fullscreenshell_v1_interface.h
   global.h
   idle_interface.h
   idleinhibit_v1_interface.h
