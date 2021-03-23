@@ -1151,7 +1151,7 @@ void SeatInterface::setFocusedKeyboardSurface(SurfaceInterface *surface)
 
         d->globalKeyboard.focus.primarySelections = primarySelectionDevices;
         for (auto primaryDataDevice : primarySelectionDevices) {
-            if (d->currentSelection) {
+            if (d->currentPrimarySelection) {
                 primaryDataDevice->sendSelection(d->currentPrimarySelection);
             } else {
                 primaryDataDevice->sendClearSelection();
