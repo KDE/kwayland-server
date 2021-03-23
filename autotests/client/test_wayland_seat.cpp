@@ -1169,22 +1169,6 @@ void TestWaylandSeat::testPointerAxis()
     QCOMPARE(axisStoppedSpy.count(), 1);
     QCOMPARE(axisStoppedSpy.last().at(0).value<quint32>(), 3);
     QCOMPARE(axisStoppedSpy.last().at(1).value<Pointer::Axis>(), Pointer::Axis::Horizontal);
-
-    // if the device is unknown, no axis_source event should be sent
-    m_seatInterface->setTimestamp(timestamp++);
-    m_seatInterface->notifyPointerAxis(Qt::Horizontal, 42, 1, PointerAxisSource::Unknown);
-    m_seatInterface->notifyPointerFrame();
-    QVERIFY(frameSpy.wait());
-    QCOMPARE(frameSpy.count(), 5);
-    QCOMPARE(axisSourceSpy.count(), 3);
-    QCOMPARE(axisDiscreteSpy.count(), 2);
-    QCOMPARE(axisDiscreteSpy.last().at(0).value<Pointer::Axis>(), Pointer::Axis::Horizontal);
-    QCOMPARE(axisDiscreteSpy.last().at(1).value<qint32>(), 1);
-    QCOMPARE(axisSpy.count(), 3);
-    QCOMPARE(axisSpy.last().at(0).value<quint32>(), quint32(4));
-    QCOMPARE(axisSpy.last().at(1).value<Pointer::Axis>(), Pointer::Axis::Horizontal);
-    QCOMPARE(axisSpy.last().at(2).value<qreal>(), 42.0);
-    QCOMPARE(axisStoppedSpy.count(), 1);
 }
 
 void TestWaylandSeat::testKeyboardSubSurfaceTreeFromPointer()

@@ -216,26 +216,8 @@ void PointerInterface::sendAxis(Qt::Orientation orientation, qreal delta, qint32
             ? PointerInterfacePrivate::axis_vertical_scroll
             : PointerInterfacePrivate::axis_horizontal_scroll;
 
-        if (source != PointerAxisSource::Unknown && version >= WL_POINTER_AXIS_SOURCE_SINCE_VERSION) {
-            PointerInterfacePrivate::axis_source wlSource;
-            switch (source) {
-            case PointerAxisSource::Wheel:
-                wlSource = PointerInterfacePrivate::axis_source_wheel;
-                break;
-            case PointerAxisSource::Finger:
-                wlSource = PointerInterfacePrivate::axis_source_finger;
-                break;
-            case PointerAxisSource::Continuous:
-                wlSource = PointerInterfacePrivate::axis_source_continuous;
-                break;
-            case PointerAxisSource::WheelTilt:
-                wlSource = PointerInterfacePrivate::axis_source_wheel_tilt;
-                break;
-            default:
-                Q_UNREACHABLE();
-                break;
-            }
-            d->send_axis_source(resource->handle, wlSource);
+        if (version >= WL_POINTER_AXIS_SOURCE_SINCE_VERSION) {
+            d->send_axis_source(resource->handle, quint32(source));
         }
 
         if (delta != 0.0) {

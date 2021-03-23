@@ -30,29 +30,14 @@ class TextInputV3Interface;
 class TouchInterface;
 
 /**
- * Describes the source types for axis events. This indicates to the
- * client how an axis event was physically generated; a client may
- * adjust the user interface accordingly. For example, scroll events
- * from a "finger" source may be in a smooth coordinate space with
- * kinetic scrolling whereas a "wheel" source may be in discrete steps
- * of a number of lines.
- *
- * The "continuous" axis source is a device generating events in a
- * continuous coordinate space, but using something other than a
- * finger. One example for this source is button-based scrolling where
- * the vertical motion of a device is converted to scroll events while
- * a button is held down.
- *
- * The "wheel tilt" axis source indicates that the actual device is a
- * wheel but the scroll event is not caused by a rotation but a
- * (usually sideways) tilt of the wheel.
+ * This enum type is used to specify the source of an axis event. It is
+ * equivalent to the @c wl_pointer.axis_source enum.
  */
-enum class PointerAxisSource {
-    Unknown,
-    Wheel,
-    Finger,
-    Continuous,
-    WheelTilt
+enum class PointerAxisSource : quint32 {
+    Wheel = 0,
+    Finger = 1,
+    Continuous = 2,
+    WheelTilt = 3,
 };
 
 /**

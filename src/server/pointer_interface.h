@@ -22,7 +22,7 @@ class PointerInterfacePrivate;
 class SeatInterface;
 class SurfaceInterface;
 
-enum class PointerAxisSource;
+enum class PointerAxisSource : quint32;
 enum class PointerButtonState : quint32;
 
 /**
