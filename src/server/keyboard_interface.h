@@ -31,6 +31,7 @@ public:
      * @returns the focused SurfaceInterface on this keyboard resource, if any.
      */
     SurfaceInterface *focusedSurface() const;
+    void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
 
     /**
      * @returns The key repeat in character per second
@@ -58,7 +59,6 @@ public:
     void sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group);
 
 private:
-    void setFocusedSurface(SurfaceInterface *surface, quint32 serial);
     friend class SeatInterface;
     friend class KeyboardInterfacePrivate;
     explicit KeyboardInterface(SeatInterface *seat);

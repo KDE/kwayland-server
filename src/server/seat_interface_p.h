@@ -8,6 +8,9 @@
 
 // KWayland
 #include "seat_interface.h"
+#include "keyboardgrab.h"
+#include "pointergrab.h"
+#include "touchgrab.h"
 // Qt
 #include <QHash>
 #include <QMap>
@@ -27,6 +30,41 @@ class TextInputV2Interface;
 class TextInputV3Interface;
 class PrimarySelectionDeviceV1Interface;
 
+class DefaultPointerGrab : public PointerGrab
+{
+public:
+    explicit DefaultPointerGrab(SeatInterface *seat);
+
+    void handleFocus(SurfaceInterface *surface, const QPointF &position, quint32 serial) override;
+    void handleButton(quint32 button, PointerButtonState state, quint32 serial) override;
+    void handleAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source) override;
+    void handleMotion(const QPointF &position) override;
+    void handleFrame() override;
+};
+
+class DefaultKeyboardGrab : public KeyboardGrab
+{
+public:
+    explicit DefaultKeyboardGrab(SeatInterface *seat);
+
+    void handleFocus(SurfaceInterface *surface, quint32 serial) override;
+    void handleKey(quint32 keyCode, KeyboardKeyState state) override;
+    void handleModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group) override;
+};
+
+class DefaultTouchGrab : public TouchGrab
+{
+public:
+    explicit DefaultTouchGrab(SeatInterface *seat);
+
+    void handleFocus(SurfaceInterface *surface) override;
+    void handleDown(qint32 id, quint32 serial, const QPointF &localPos) override;
+    void handleUp(qint32 id, quint32 serial) override;
+    void handleFrame() override;
+    void handleCancel() override;
+    void handleMotion(qint32 id, const QPointF &localPos) override;
+};
+
 class SeatInterfacePrivate : public QtWaylandServer::wl_seat
 {
 public:
@@ -41,6 +79,15 @@ public:
     void endDrag(quint32 serial);
     void cancelDrag(quint32 serial);
 
+    void grabKeyboard(KeyboardGrab *grab);
+    void ungrabKeyboard(KeyboardGrab *grab);
+
+    void grabTouch(TouchGrab *grab);
+    void ungrabTouch(TouchGrab *grab);
+
+    void grabPointer(PointerGrab *grab);
+    void ungrabPointer(PointerGrab *grab);
+
     SeatInterface *q;
     QPointer<Display> display;
     QString name;
@@ -53,6 +100,12 @@ public:
     QVector<DataDeviceInterface*> dataDevices;
     QVector<PrimarySelectionDeviceV1Interface*> primarySelectionDevices;
     QVector<DataControlDeviceV1Interface*> dataControlDevices;
+    KeyboardGrab *keyboardGrab = nullptr;
+    QScopedPointer<KeyboardGrab> defaultKeyboardGrab;
+    TouchGrab *touchGrab = nullptr;
+    QScopedPointer<TouchGrab> defaultTouchGrab;
+    PointerGrab *pointerGrab = nullptr;
+    QScopedPointer<PointerGrab> defaultPointerGrab;
 
     // TextInput v2
     QPointer<TextInputV2Interface> textInputV2;

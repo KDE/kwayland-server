@@ -25,6 +25,7 @@ set(SERVER_LIB_SRCS
     inputmethod_v1_interface.cpp
     keyboard_interface.cpp
     keyboard_shortcuts_inhibit_v1_interface.cpp
+    keyboardgrab.cpp
     keystate_interface.cpp
     layershell_v1_interface.cpp
     linuxdmabuf_v1_interface.cpp
@@ -39,6 +40,7 @@ set(SERVER_LIB_SRCS
     pointer_interface.cpp
     pointerconstraints_v1_interface.cpp
     pointergestures_v1_interface.cpp
+    pointergrab.cpp
     primaryselectiondevice_v1_interface.cpp
     primaryselectiondevicemanager_v1_interface.cpp
     primaryselectionoffer_v1_interface.cpp
@@ -59,6 +61,7 @@ set(SERVER_LIB_SRCS
     textinput_v2_interface.cpp
     textinput_v3_interface.cpp
     touch_interface.cpp
+    touchgrab.cpp
     viewporter_interface.cpp
     xdgdecoration_v1_interface.cpp
     xdgforeign_v2_interface.cpp
@@ -336,6 +339,7 @@ set(SERVER_LIB_HEADERS
   inputmethod_v1_interface.h
   keyboard_interface.h
   keyboard_shortcuts_inhibit_v1_interface.h
+  keyboardgrab.h
   keystate_interface.h
   layershell_v1_interface.h
   linuxdmabuf_v1_interface.h
@@ -350,6 +354,7 @@ set(SERVER_LIB_HEADERS
   pointer_interface.h
   pointerconstraints_v1_interface.h
   pointergestures_v1_interface.h
+  pointergrab.h
   primaryselectiondevicemanager_v1_interface.h
   relativepointer_v1_interface.h
   resource.h
@@ -366,6 +371,7 @@ set(SERVER_LIB_HEADERS
   textinput_v2_interface.h
   textinput_v3_interface.h
   touch_interface.h
+  touchgrab.h
   utils.h
   viewporter_interface.h
   xdgdecoration_v1_interface.h

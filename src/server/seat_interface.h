@@ -21,12 +21,15 @@ namespace KWaylandServer
 class AbstractDataSource;
 class DataDeviceInterface;
 class Display;
+class KeyboardGrab;
 class KeyboardInterface;
+class PointerGrab;
 class PointerInterface;
 class SeatInterfacePrivate;
 class SurfaceInterface;
 class TextInputV2Interface;
 class TextInputV3Interface;
+class TouchGrab;
 class TouchInterface;
 
 /**
@@ -169,6 +172,15 @@ public:
 
     void setTimestamp(quint32 time);
     quint32 timestamp() const;
+
+    KeyboardGrab *keyboardGrab() const;
+    KeyboardGrab *defaultKeyboardGrab() const;
+
+    TouchGrab *touchGrab() const;
+    TouchGrab *defaultTouchGrab() const;
+
+    PointerGrab *pointerGrab() const;
+    PointerGrab *defaultPointerGrab() const;
 
     /**
      * @name Drag'n'Drop related methods
