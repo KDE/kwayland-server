@@ -12,8 +12,6 @@
 #include <QPointer>
 #include <QHash>
 
-class QTemporaryFile;
-
 namespace KWaylandServer
 {
 
@@ -25,7 +23,7 @@ public:
     KeyboardInterfacePrivate(SeatInterface *s);
 
 
-    void sendKeymap(int fd, quint32 size);
+    void sendKeymap(Resource *resource);
     void sendModifiers();
     void sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group, quint32 serial);
 
@@ -40,7 +38,7 @@ public:
     SurfaceInterface *focusedSurface = nullptr;
     QPointer<SurfaceInterface> focusedChildSurface;
     QMetaObject::Connection destroyConnection;
-    QScopedPointer<QTemporaryFile> keymap;
+    QByteArray keymap;
 
     struct {
         qint32 charactersPerSecond = 0;
