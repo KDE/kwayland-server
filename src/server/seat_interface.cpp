@@ -1123,6 +1123,9 @@ void SeatInterface::setFocusedKeyboardSurface(SurfaceInterface *surface)
     }
     d->globalKeyboard.focus = Private::Keyboard::Focus();
     d->globalKeyboard.focus.surface = surface;
+
+    d->keyboard->setFocusedSurface(surface, serial);
+
     if (d->globalKeyboard.focus.surface) {
         d->globalKeyboard.focus.destroyConnection = connect(surface, &QObject::destroyed, this,
             [this] {
@@ -1158,8 +1161,6 @@ void SeatInterface::setFocusedKeyboardSurface(SurfaceInterface *surface)
             }
         }
     }
-
-    d->keyboard->setFocusedSurface(surface, serial);
 
     // focused text input surface follows keyboard
     if (hasKeyboard()) {
