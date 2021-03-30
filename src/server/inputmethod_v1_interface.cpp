@@ -5,8 +5,10 @@
 */
 
 #include "inputmethod_v1_interface.h"
+#include "inputmethod_v1_interface_p.h"
 #include "seat_interface.h"
 #include "display.h"
+#include "logging.h"
 #include "surface_interface.h"
 #include "output_interface.h"
 #include "surfacerole_p.h"
@@ -24,9 +26,11 @@ static int s_version = 1;
 class InputMethodContextV1InterfacePrivate : public QtWaylandServer::zwp_input_method_context_v1
 {
 public:
-    InputMethodContextV1InterfacePrivate(InputMethodContextV1Interface *q)
+    InputMethodContextV1InterfacePrivate(InputMethodContextV1Interface *q,
+                                         InputMethodV1Interface *inputMethod)
         : zwp_input_method_context_v1()
         , q(q)
+        , inputMethod(inputMethod)
     {
     }
 
@@ -80,9 +84,31 @@ public:
     {
         Q_EMIT q->keysym(serial, time, sym, state == WL_KEYBOARD_KEY_STATE_PRESSED, toQtModifiers(modifiers));
     }
-    void zwp_input_method_context_v1_grab_keyboard(Resource *, uint32_t keyboard) override
+    void zwp_input_method_context_v1_grab_keyboard(Resource *resource, uint32_t keyboard) override
     {
-        Q_EMIT q->grabKeyboard(keyboard);
+        if (keyboardGrab) {
+            qCWarning(KWAYLAND_SERVER) << "Input method already has keyboard grab";
+            return;
+        }
+
+        SeatInterface *seat = inputMethod->seat();
+        if (!seat->hasKeyboard()) {
+            qCWarning(KWAYLAND_SERVER) << "wl_keyboard capability is missing, but im tried to grab keyboard";
+            return;
+        }
+
+        // The client has no way to indicate what version of wl_keyboard it prefers. So,
+        // create a wl_keyboard of v1 to prevent crashing the input method.
+        wl_resource *keyboardResource = wl_resource_create(resource->client(), &wl_keyboard_interface,
+                                                           1, keyboard);
+        if (!keyboardResource) {
+            wl_resource_post_no_memory(resource->handle);
+            return;
+        }
+
+        InputMethodKeyboardV1 *dummyKeyboard = new InputMethodKeyboardV1(keyboardResource);
+        keyboardGrab = new InputMethodKeyboardGrabV1(seat, dummyKeyboard, q);
+        keyboardGrab->setActive(true);
     }
     void zwp_input_method_context_v1_key(Resource *, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) override
     {
@@ -133,12 +159,14 @@ public:
 
 private:
     InputMethodContextV1Interface *const q;
+    InputMethodV1Interface *inputMethod;
     QVector<Qt::KeyboardModifiers> mods;
+    QPointer<InputMethodKeyboardGrabV1> keyboardGrab;
 };
 
 InputMethodContextV1Interface::InputMethodContextV1Interface(InputMethodV1Interface *parent)
     : QObject(parent)
-    , d(new InputMethodContextV1InterfacePrivate(this))
+    , d(new InputMethodContextV1InterfacePrivate(this, parent))
 {
 }
 
@@ -352,10 +380,11 @@ SurfaceInterface *InputPanelSurfaceV1Interface::surface() const
 class InputMethodV1InterfacePrivate : public QtWaylandServer::zwp_input_method_v1
 {
 public:
-    InputMethodV1InterfacePrivate(Display *d, InputMethodV1Interface *q)
+    InputMethodV1InterfacePrivate(Display *d, SeatInterface *seat, InputMethodV1Interface *q)
         : zwp_input_method_v1(*d, s_version)
         , q(q)
         , m_display(d)
+        , m_seat(seat)
     {
     }
 
@@ -372,11 +401,12 @@ public:
     InputMethodContextV1Interface *m_context = nullptr;
     InputMethodV1Interface *const q;
     Display *const m_display;
+    SeatInterface *const m_seat;
 };
 
-InputMethodV1Interface::InputMethodV1Interface(Display *d, QObject *parent)
+InputMethodV1Interface::InputMethodV1Interface(Display *d, SeatInterface *seat, QObject *parent)
     : QObject(parent)
-    , d(new InputMethodV1InterfacePrivate(d, this))
+    , d(new InputMethodV1InterfacePrivate(d, seat, this))
 {
 }
 
@@ -412,9 +442,53 @@ void InputMethodV1Interface::sendDeactivate()
     d->m_context = nullptr;
 }
 
+SeatInterface *InputMethodV1Interface::seat() const
+{
+    return d->m_seat;
+}
+
 InputMethodContextV1Interface *InputMethodV1Interface::context() const
 {
     return d->m_context;
+}
+
+InputMethodKeyboardV1::InputMethodKeyboardV1(::wl_resource *resource)
+    : QtWaylandServer::wl_keyboard(resource)
+{
+}
+
+InputMethodKeyboardGrabV1::InputMethodKeyboardGrabV1(SeatInterface *seat,
+                                                     InputMethodKeyboardV1 *keyboard,
+                                                     QObject *parent)
+    : QObject(parent)
+    , KeyboardGrab(seat)
+    , m_keyboard(keyboard)
+{
+}
+
+void InputMethodKeyboardGrabV1::cancel()
+{
+    delete this;
+}
+
+void InputMethodKeyboardGrabV1::handleFocus(SurfaceInterface *surface, quint32 serial)
+{
+    Q_UNUSED(surface)
+    Q_UNUSED(serial)
+}
+
+void InputMethodKeyboardGrabV1::handleKey(quint32 keyCode, KeyboardKeyState state)
+{
+    const quint32 serial = seat()->display()->nextSerial();
+    m_keyboard->send_key(serial, seat()->timestamp(), keyCode, quint32(state));
+}
+
+void InputMethodKeyboardGrabV1::handleModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
+{
+    Q_UNUSED(depressed)
+    Q_UNUSED(latched)
+    Q_UNUSED(locked)
+    Q_UNUSED(group)
 }
 
 }
