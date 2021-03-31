@@ -99,24 +99,20 @@ void TestWaylandOutputManagement::init()
     auto outputDeviceInterface = new OutputDeviceInterface(m_display, this);
 
     OutputDeviceInterface::Mode m0;
-    m0.id = 0;
     m0.size = QSize(800, 600);
     m0.flags = OutputDeviceInterface::ModeFlags(OutputDeviceInterface::ModeFlag::Preferred);
     outputDeviceInterface->addMode(m0);
 
     OutputDeviceInterface::Mode m1;
-    m1.id = 1;
     m1.size = QSize(1024, 768);
     outputDeviceInterface->addMode(m1);
 
     OutputDeviceInterface::Mode m2;
-    m2.id = 2;
     m2.size = QSize(1280, 1024);
     m2.refreshRate = 90000;
     outputDeviceInterface->addMode(m2);
 
     OutputDeviceInterface::Mode m3;
-    m3.id = 3;
     m3.size = QSize(1920, 1080);
     m3.flags = OutputDeviceInterface::ModeFlags();
     m3.refreshRate = 100000;
@@ -124,7 +120,7 @@ void TestWaylandOutputManagement::init()
 
     m_modes << m0 << m1 << m2 << m3;
 
-    outputDeviceInterface->setCurrentMode(1);
+    outputDeviceInterface->setCurrentMode(m2.size, m2.refreshRate);
     outputDeviceInterface->setGlobalPosition(QPoint(0, 1920));
     m_serverOutputs << outputDeviceInterface;
 
@@ -214,8 +210,8 @@ void TestWaylandOutputManagement::applyPendingChanges(KWaylandServer::OutputConf
         if (c->enabledChanged()) {
             outputdevice->setEnabled(c->enabled());
         }
-        if (c->modeChanged()) {
-            outputdevice->setCurrentMode(c->mode());
+        if (c->sizeChanged() || c->refreshRateChanged()) {
+            outputdevice->setCurrentMode(c->size(), c->refreshRate());
         }
         if (c->transformChanged()) {
             outputdevice->setTransform(c->transform());
@@ -383,7 +379,7 @@ void TestWaylandOutputManagement::testMultipleSettings()
     QSignalSpy serverApplySpy(m_outputManagementInterface, &OutputManagementInterface::configurationChangeRequested);
     QVERIFY(serverApplySpy.isValid());
 
-    config->setMode(output, m_modes.first().id);
+    // config->setMode(output, m_modes.first().id);
     config->setTransform(output, OutputDevice::Transform::Rotated90);
     config->setPosition(output, QPoint(13, 37));
     config->setScaleF(output, 2.0);
@@ -403,7 +399,7 @@ void TestWaylandOutputManagement::testMultipleSettings()
     QCOMPARE(configAppliedSpy.count(), 1);
     QCOMPARE(outputChangedSpy.count(), 5);
 
-    config->setMode(output, m_modes.at(1).id);
+    // config->setMode(output, m_modes.at(1).id);
     config->setTransform(output, OutputDevice::Transform::Normal);
     config->setPosition(output, QPoint(0, 1920));
     config->setScaleF(output, 1.0);
@@ -441,7 +437,7 @@ void TestWaylandOutputManagement::testConfigFailed()
     QSignalSpy configFailedSpy(config, &KWayland::Client::OutputConfiguration::failed);
     QVERIFY(configFailedSpy.isValid());
 
-    config->setMode(output, m_modes.last().id);
+    //config->setMode(output, m_modes.last().id);
     config->setTransform(output, OutputDevice::Transform::Normal);
     config->setPosition(output, QPoint(-1, -1));
 
@@ -466,7 +462,7 @@ void TestWaylandOutputManagement::testExampleConfig()
     auto config = m_outputConfiguration;
     KWayland::Client::OutputDevice *output = m_clientOutputs.first();
 
-    config->setMode(output, m_clientOutputs.first()->modes().last().id);
+    //config->setMode(output, m_clientOutputs.first()->modes().last().id);
     config->setTransform(output, OutputDevice::Transform::Normal);
     config->setPosition(output, QPoint(-1, -1));
 

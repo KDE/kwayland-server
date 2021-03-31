@@ -38,7 +38,7 @@ public:
 
 protected:
     void org_kde_kwin_outputconfiguration_enable(Resource *resource, wl_resource *outputdevice, int32_t enable) override;
-    void org_kde_kwin_outputconfiguration_mode(Resource *resource, wl_resource *outputdevice, int32_t mode_id) override;
+    void org_kde_kwin_outputconfiguration_mode(Resource *resource, struct ::wl_resource *outputdevice, struct ::wl_resource *mode) override;
     void org_kde_kwin_outputconfiguration_transform(Resource *resource, wl_resource *outputdevice, int32_t transform) override;
     void org_kde_kwin_outputconfiguration_position(Resource *resource, wl_resource *outputdevice, int32_t x, int32_t y) override;
     void org_kde_kwin_outputconfiguration_scale(Resource *resource, wl_resource *outputdevice, int32_t scale) override;
@@ -61,24 +61,15 @@ void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_enabl
     pendingChanges(output)->d->enabled = _enable;
 }
 
-void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_mode(Resource *resource, wl_resource *outputdevice, int32_t mode_id)
+void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_mode(Resource *resource, struct ::wl_resource *outputdevice, struct ::wl_resource *modeResource)
 {
-    Q_UNUSED(resource)
+    Q_UNUSED(resource);
+    Q_UNUSED(modeResource);
+
     OutputDeviceInterface *output = OutputDeviceInterface::get(outputdevice);
 
-    bool modeValid = false;
-    for (const auto &m: output->modes()) {
-        if (m.id == mode_id) {
-            modeValid = true;
-            break;
-        }
-    }
-    if (!modeValid) {
-        qCWarning(KWAYLAND_SERVER) << "Set invalid mode id:" << mode_id;
-        return;
-    }
-    
-    pendingChanges(output)->d->modeId = mode_id;
+    pendingChanges(output)->d->size = output->pixelSize();
+    pendingChanges(output)->d->refreshRate = output->refreshRate();
 }
 
 void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_transform(Resource *resource, wl_resource *outputdevice, int32_t transform)
@@ -262,7 +253,8 @@ bool OutputConfigurationInterfacePrivate::hasPendingChanges(OutputDeviceInterfac
     }
     auto c = *it;
     return c->enabledChanged() ||
-    c->modeChanged() ||
+    c->sizeChanged() ||
+    c->refreshRateChanged() ||
     c->transformChanged() ||
     c->positionChanged() ||
     c->scaleChanged();

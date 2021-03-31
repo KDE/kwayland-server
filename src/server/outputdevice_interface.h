@@ -20,6 +20,7 @@ namespace KWaylandServer
 
 class Display;
 class OutputDeviceInterfacePrivate;
+class OutputDeviceMode;
 
 /** @class OutputDeviceInterface
  *
@@ -37,8 +38,6 @@ class KWAYLANDSERVER_EXPORT OutputDeviceInterface : public QObject
     Q_PROPERTY(QString model READ model WRITE setModel NOTIFY modelChanged)
     Q_PROPERTY(QString serialNumber READ serialNumber WRITE setSerialNumber NOTIFY serialNumberChanged)
     Q_PROPERTY(QString eisaId READ eisaId WRITE setEisaId NOTIFY eisaIdChanged)
-    Q_PROPERTY(QSize pixelSize READ pixelSize NOTIFY pixelSizeChanged)
-    Q_PROPERTY(int refreshRate READ refreshRate NOTIFY refreshRateChanged)
     Q_PROPERTY(qreal scale READ scaleF WRITE setScaleF NOTIFY scaleFChanged)
     Q_PROPERTY(QByteArray edid READ edid WRITE setEdid NOTIFY edidChanged)
     Q_PROPERTY(OutputDeviceInterface::Enablement enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
@@ -77,7 +76,7 @@ public:
         QSize size = QSize();
         int refreshRate = 60000;
         ModeFlags flags;
-        int id = -1;
+        bool operator==(const Mode &cc) const;
     };
     struct ColorCurves {
         QVector<quint16> red, green, blue;
@@ -105,8 +104,6 @@ public:
     SubPixel subPixel() const;
     Transform transform() const;
     ColorCurves colorCurves() const;
-    QList<Mode> modes() const;
-    int currentModeId() const;
 
     QByteArray edid() const;
     OutputDeviceInterface::Enablement enabled() const;
@@ -134,7 +131,7 @@ public:
      * @param mode must have a valid size and non-negative id.
      */
     void addMode(Mode &mode);
-    void setCurrentMode(const int modeId);
+    void setCurrentMode(OutputDeviceMode &mode);
     /**
      * Makes the mode with the specified @a size and @a refreshRate current.
      * Returns @c false if no mode with the given attributes exists; otherwise returns @c true.
@@ -158,8 +155,6 @@ Q_SIGNALS:
     void modelChanged(const QString&);
     void serialNumberChanged(const QString&);
     void eisaIdChanged(const QString &);
-    void pixelSizeChanged(const QSize&);
-    void refreshRateChanged(int);
 
     void scaleFChanged(qreal);
     void subPixelChanged(SubPixel);

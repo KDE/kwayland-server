@@ -42,10 +42,8 @@ public:
      /** Whether the transform() property of the outputdevice changed. */
     bool transformChanged() const;
 
-    /** Whether the currentModeId() property of the outputdevice changed.
-     * @returns @c true if the currentModeId() property of the outputdevice has changed.
-     */
-    bool modeChanged() const;
+    bool sizeChanged() const;
+    bool refreshRateChanged() const;
 
     /** Whether the globalPosition() property of the outputdevice changed.
      * @returns @c true if the globalPosition() property of the outputdevice has changed.
@@ -70,8 +68,11 @@ public:
     /** The new value for enabled. */
     OutputDeviceInterface::Enablement enabled() const;
 
-    /** The new mode id.*/
-    int mode() const;
+    /** The new mode size.*/
+    QSize size() const;
+
+    /** The new mode refreshRate.*/
+    int refreshRate() const;
 
     /** The new value for transform. */
     OutputDeviceInterface::Transform transform() const;

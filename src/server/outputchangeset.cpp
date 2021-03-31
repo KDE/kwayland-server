@@ -14,7 +14,8 @@ OutputChangeSetPrivate::OutputChangeSetPrivate(OutputDeviceInterface *outputdevi
     : q(parent)
     , outputDevice(outputdevice)
     , enabled(outputDevice->enabled())
-    , modeId(outputDevice->currentModeId())
+    , size(outputDevice->pixelSize())
+    , refreshRate(outputDevice->refreshRate())
     , transform(outputDevice->transform())
     , position(outputDevice->globalPosition())
     , scale(outputDevice->scaleF())
@@ -41,14 +42,24 @@ OutputDeviceInterface::Enablement OutputChangeSet::enabled() const
     return d->enabled;
 }
 
-bool OutputChangeSet::modeChanged() const
+bool OutputChangeSet::sizeChanged() const
 {
-    return d->modeId != d->outputDevice->currentModeId();
+    return d->size != d->outputDevice->pixelSize();
 }
 
-int OutputChangeSet::mode() const
+QSize OutputChangeSet::size() const
 {
-    return d->modeId;
+    return d->size;
+}
+
+bool OutputChangeSet::refreshRateChanged() const
+{
+    return d->refreshRate != d->outputDevice->refreshRate();
+}
+
+int OutputChangeSet::refreshRate() const
+{
+    return d->refreshRate;
 }
 
 bool OutputChangeSet::transformChanged() const

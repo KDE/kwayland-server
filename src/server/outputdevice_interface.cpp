@@ -19,6 +19,53 @@ namespace KWaylandServer
 
 static const quint32 s_version = 3;
 
+class OutputDeviceMode : public QtWaylandServer::org_kde_kwin_outputdevice_mode {
+public:
+
+    OutputDeviceMode(Display *display, const OutputDeviceInterface::Mode &mode) :
+        QtWaylandServer::org_kde_kwin_outputdevice_mode(*display, s_version),
+        m_mode(mode)
+    {}
+
+    void org_kde_kwin_outputdevice_mode_bind_resource(QtWaylandServer::org_kde_kwin_outputdevice_mode::Resource *resource) override;
+    void org_kde_kwin_outputdevice_mode_destroy_resource(QtWaylandServer::org_kde_kwin_outputdevice_mode::Resource *resource) override;
+
+    OutputDeviceInterface::Mode mode() const {
+        return m_mode;
+    }
+
+    QSize size() const {
+        return m_mode.size;
+    }
+
+    int refreshRate() const {
+        return m_mode.refreshRate;
+    }
+
+    OutputDeviceInterface::ModeFlags flags() const {
+        return m_mode.flags;
+    }
+
+private:
+    OutputDeviceInterface::Mode m_mode;
+};
+
+void OutputDeviceMode::org_kde_kwin_outputdevice_mode_bind_resource(QtWaylandServer::org_kde_kwin_outputdevice_mode::Resource *resource)
+{
+    send_size(resource->handle, m_mode.size.width(), m_mode.size.height());
+    send_refresh(resource->handle, m_mode.refreshRate);
+
+    if (m_mode.flags.testFlag(OutputDeviceInterface::ModeFlag::Preferred)) {
+        send_preferred(resource->handle);
+    }
+}
+
+void OutputDeviceMode::org_kde_kwin_outputdevice_mode_destroy_resource(QtWaylandServer::org_kde_kwin_outputdevice_mode::Resource *resource)
+{
+    send_finished(resource->handle);
+}
+
+
 class OutputDeviceInterfacePrivate : public QtWaylandServer::org_kde_kwin_outputdevice
 {
 public:
@@ -37,7 +84,7 @@ public:
     void updateOverscan();
 
     void sendGeometry(Resource *resource);
-    void sendMode(Resource *resource, const OutputDeviceInterface::Mode &mode);
+    void sendMode(Resource *resource, OutputDeviceMode &mode);
     void sendDone(Resource *resource);
     void sendUuid(Resource *resource);
     void sendEdid(Resource *resource);
@@ -48,6 +95,8 @@ public:
     void sendSerialNumber(Resource *resource);
     void sendCapabilities(Resource *resource);
     void sendOverscan(Resource *resource);
+
+    void emitModeChanged(OutputDeviceMode newMode) const;
 
     static OutputDeviceInterface *get(wl_resource *native);
 
@@ -61,8 +110,9 @@ public:
     OutputDeviceInterface::SubPixel subPixel = OutputDeviceInterface::SubPixel::Unknown;
     OutputDeviceInterface::Transform transform = OutputDeviceInterface::Transform::Normal;
     OutputDeviceInterface::ColorCurves colorCurves;
-    QList<OutputDeviceInterface::Mode> modes;
-    OutputDeviceInterface::Mode currentMode;
+
+    OutputDeviceMode *currentMode;
+    QList<OutputDeviceMode> modes;
 
     QByteArray edid;
     OutputDeviceInterface::Enablement enabled = OutputDeviceInterface::Enablement::Enabled;
@@ -103,10 +153,9 @@ OutputDeviceInterface::OutputDeviceInterface(Display *display, QObject *parent)
 {
     connect(this, &OutputDeviceInterface::currentModeChanged, this,
         [this] {
-            Q_ASSERT(d->currentMode.id >= 0);
             const auto clientResources = d->resourceMap();
             for (auto resource : clientResources) {
-                d->sendMode(resource, d->currentMode);
+                d->sendMode(resource, *d->currentMode);
                 d->sendDone(resource);
             }
         }
@@ -127,28 +176,29 @@ OutputDeviceInterface::~OutputDeviceInterface()
 
 QSize OutputDeviceInterface::pixelSize() const
 {
-    if (d->currentMode.id == -1) {
+    if (d->currentMode == nullptr) {
         return QSize();
     }
-    return d->currentMode.size;
+    return d->currentMode->size();
 }
 
 int OutputDeviceInterface::refreshRate() const
 {
-    if (d->currentMode.id == -1) {
+    if (d->currentMode == nullptr) {
         return 60000;
     }
-    return d->currentMode.refreshRate;
+    return d->currentMode->refreshRate();
 }
 
 void OutputDeviceInterface::addMode(Mode &mode)
 {
-    Q_ASSERT(mode.id >= 0);
     Q_ASSERT(mode.size.isValid());
 
+    OutputDeviceMode *outputDeviceMode = nullptr;
+
     auto currentModeIt = std::find_if(d->modes.begin(), d->modes.end(),
-        [](const Mode &mode) {
-            return mode.flags.testFlag(ModeFlag::Current);
+        [](const OutputDeviceMode &mode) {
+            return mode.mode().flags.testFlag(ModeFlag::Current);
         }
     );
     if (currentModeIt == d->modes.end() && !mode.flags.testFlag(ModeFlag::Current)) {
@@ -157,99 +207,82 @@ void OutputDeviceInterface::addMode(Mode &mode)
     }
     if (currentModeIt != d->modes.end() && mode.flags.testFlag(ModeFlag::Current)) {
         // another mode has the current flag - remove
-        (*currentModeIt).flags &= ~uint(ModeFlag::Current);
+        (*currentModeIt).mode().flags &= ~uint(ModeFlag::Current);
     }
 
     if (mode.flags.testFlag(ModeFlag::Preferred)) {
         // remove from existing Preferred mode
         auto preferredIt = std::find_if(d->modes.begin(), d->modes.end(),
-            [](const Mode &mode) {
-                return mode.flags.testFlag(ModeFlag::Preferred);
+            [](const OutputDeviceMode &mode) {
+                return mode.mode().flags.testFlag(ModeFlag::Preferred);
             }
         );
         if (preferredIt != d->modes.end()) {
-            (*preferredIt).flags &= ~uint(ModeFlag::Preferred);
+            (*preferredIt).mode().flags &= ~uint(ModeFlag::Preferred);
         }
     }
 
     auto existingModeIt = std::find_if(d->modes.begin(), d->modes.end(),
-        [mode](const Mode &mode_it) {
-            return mode.size == mode_it.size &&
-                   mode.refreshRate == mode_it.refreshRate &&
-                   mode.id == mode_it.id;
+        [mode](const OutputDeviceMode &mode_it) {
+            return mode.size == mode_it.size() &&
+                   mode.refreshRate == mode_it.refreshRate();
         }
     );
-    auto emitChanges = [this, mode] {
-        emit modesChanged();
-        if (mode.flags.testFlag(ModeFlag::Current)) {
-            d->currentMode = mode;
-            emit refreshRateChanged(mode.refreshRate);
-            emit pixelSizeChanged(mode.size);
-            emit currentModeChanged();
-        }
-    };
     if (existingModeIt != d->modes.end()) {
-        if ((*existingModeIt).flags == mode.flags) {
+        if ((*existingModeIt).mode().flags == mode.flags) {
             // nothing to do
             return;
         }
-        (*existingModeIt).flags = mode.flags;
-        emitChanges();
-        return;
+        (*existingModeIt).mode().flags = mode.flags;
+        outputDeviceMode = &(*existingModeIt);
     } else {
-        auto idIt = std::find_if(d->modes.constBegin(), d->modes.constEnd(),
-                                        [mode](const Mode &mode_it) {
-                                            return mode.id == mode_it.id;
-                                        }
-        );
-        if (idIt != d->modes.constEnd()) {
-            qCWarning(KWAYLAND_SERVER) << "Duplicate Mode id" << mode.id << ": not adding mode" << mode.size << mode.refreshRate;
-            return;
-        }
+        outputDeviceMode = new OutputDeviceMode(d->display.data(), mode);
+        d->modes << *outputDeviceMode;
 
+        const auto clientResources = d->resourceMap();
+        for (auto resource : clientResources) {
+            d->sendMode(resource, *outputDeviceMode);
+            d->sendDone(resource);
+        }
     }
-    d->modes << mode;
-    emitChanges();
+
+    Q_EMIT modesChanged();
+    if (mode.flags.testFlag(ModeFlag::Current)) {
+        d->currentMode = outputDeviceMode;
+        Q_EMIT currentModeChanged();
+    }
 }
 
-void OutputDeviceInterface::setCurrentMode(const int modeId)
+void OutputDeviceInterface::setCurrentMode(OutputDeviceMode &mode)
 {
     auto currentModeIt = std::find_if(d->modes.begin(), d->modes.end(),
-        [](const Mode &mode) {
-            return mode.flags.testFlag(ModeFlag::Current);
+        [](const OutputDeviceMode &mode) {
+            return mode.mode().flags.testFlag(ModeFlag::Current);
         }
     );
     if (currentModeIt != d->modes.end()) {
         // another mode has the current flag - remove
-        (*currentModeIt).flags &= ~uint(ModeFlag::Current);
+        (*currentModeIt).mode().flags &= ~uint(ModeFlag::Current);
     }
 
-    auto existingModeIt = std::find_if(d->modes.begin(), d->modes.end(),
-        [modeId](const Mode &mode) {
-            return mode.id == modeId;
-        }
-    );
+    mode.mode().flags |= ModeFlag::Current;
+    d->currentMode = &mode;
 
-    Q_ASSERT(existingModeIt != d->modes.end());
-    (*existingModeIt).flags |= ModeFlag::Current;
-    d->currentMode = *existingModeIt;
     emit modesChanged();
-    emit refreshRateChanged((*existingModeIt).refreshRate);
-    emit pixelSizeChanged((*existingModeIt).size);
     emit currentModeChanged();
 }
 
 bool OutputDeviceInterface::setCurrentMode(const QSize &size, int refreshRate)
 {
-    auto mode = std::find_if(d->modes.constBegin(), d->modes.constEnd(),
-        [size, refreshRate](const Mode &mode) {
-            return mode.size == size && mode.refreshRate == refreshRate;
+    auto mode = std::find_if(d->modes.begin(), d->modes.end(),
+        [size, refreshRate](OutputDeviceMode &mode) {
+            return mode.mode().size == size && mode.mode().refreshRate == refreshRate;
         }
     );
-    if (mode == d->modes.constEnd()) {
+    if (mode == d->modes.end()) {
         return false;
     }
-    setCurrentMode((*mode).id);
+    setCurrentMode(*mode);
     return true;
 }
 
@@ -303,10 +336,10 @@ void OutputDeviceInterfacePrivate::org_kde_kwin_outputdevice_bind_resource(Resou
     sendEisaId(resource);
     sendSerialNumber(resource);
 
-    auto currentModeIt = modes.constEnd();
-    for (auto it = modes.constBegin(); it != modes.constEnd(); ++it) {
-        const OutputDeviceInterface::Mode &mode = *it;
-        if (mode.flags.testFlag(OutputDeviceInterface::ModeFlag::Current)) {
+    auto currentModeIt = modes.end();
+    for (auto it = modes.begin(); it != modes.end(); ++it) {
+        OutputDeviceMode &mode = *it;
+        if (mode.mode().flags.testFlag(OutputDeviceInterface::ModeFlag::Current)) {
             // needs to be sent as last mode
             currentModeIt = it;
             continue;
@@ -314,7 +347,7 @@ void OutputDeviceInterfacePrivate::org_kde_kwin_outputdevice_bind_resource(Resou
         sendMode(resource, mode);
     }
 
-    if (currentModeIt != modes.constEnd()) {
+    if (currentModeIt != modes.end()) {
         sendMode(resource, *currentModeIt);
     }
 
@@ -326,22 +359,13 @@ void OutputDeviceInterfacePrivate::org_kde_kwin_outputdevice_bind_resource(Resou
     sendDone(resource);
 }
 
-void OutputDeviceInterfacePrivate::sendMode(Resource *resource, const OutputDeviceInterface::Mode &mode)
+void OutputDeviceInterfacePrivate::sendMode(Resource *resource, OutputDeviceMode &mode)
 {
-    int32_t flags = 0;
-    if (mode.flags.testFlag(OutputDeviceInterface::ModeFlag::Current)) {
-        flags |= WL_OUTPUT_MODE_CURRENT;
-    }
-    if (mode.flags.testFlag(OutputDeviceInterface::ModeFlag::Preferred)) {
-        flags |= WL_OUTPUT_MODE_PREFERRED;
-    }
-    send_mode(resource->handle,
-                flags,
-                mode.size.width(),
-                mode.size.height(),
-                mode.refreshRate,
-                mode.id);
+    // bind to client
+    auto *clientModeResource = mode.add(resource->client(), s_version);
 
+    send_mode(resource->handle,
+                clientModeResource->handle);
 }
 
 void OutputDeviceInterfacePrivate::sendGeometry(Resource *resource)
@@ -437,6 +461,12 @@ void OutputDeviceInterfacePrivate::updateColorCurves()
     }
 }
 
+bool OutputDeviceInterface::Mode::operator==(const Mode &mode) const
+{
+    return size == mode.size &&
+            refreshRate == mode.refreshRate &&
+            flags == mode.flags;
+}
 bool OutputDeviceInterface::ColorCurves::operator==(const ColorCurves &cc) const
 {
     return red == cc.red && green == cc.green && blue == cc.blue;
@@ -524,21 +554,6 @@ OutputDeviceInterface::Transform OutputDeviceInterface::transform() const
 OutputDeviceInterface::ColorCurves OutputDeviceInterface::colorCurves() const
 {
     return d->colorCurves;
-}
-
-QList< OutputDeviceInterface::Mode > OutputDeviceInterface::modes() const
-{
-    return d->modes;
-}
-
-int OutputDeviceInterface::currentModeId() const
-{
-    for (const Mode &m: d->modes) {
-        if (m.flags.testFlag(OutputDeviceInterface::ModeFlag::Current)) {
-            return m.id;
-        }
-    }
-    return -1;
 }
 
 void OutputDeviceInterface::setColorCurves(const ColorCurves &colorCurves)

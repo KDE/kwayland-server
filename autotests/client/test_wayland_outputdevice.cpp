@@ -84,23 +84,20 @@ void TestWaylandOutputDevice::init()
     m_serverOutputDevice->setUuid(QUuid("00000000-0000-0000-0000-000000000000"));
 
     OutputDeviceInterface::Mode m0;
-    m0.id = 0;
     m0.size = QSize(800, 600);
     m0.flags = OutputDeviceInterface::ModeFlags(OutputDeviceInterface::ModeFlag::Preferred);
     m_serverOutputDevice->addMode(m0);
 
     OutputDeviceInterface::Mode m1;
-    m1.id = 1;
     m1.size = QSize(1024, 768);
     m_serverOutputDevice->addMode(m1);
 
     OutputDeviceInterface::Mode m2;
-    m2.id = 2;
     m2.size = QSize(1280, 1024);
     m2.refreshRate = 90000;
     m_serverOutputDevice->addMode(m2);
 
-    m_serverOutputDevice->setCurrentMode(1);
+    m_serverOutputDevice->setCurrentMode(QSize(1024, 768), 60000);
 
     m_edid = QByteArray::fromBase64("AP///////wAQrBbwTExLQQ4WAQOANCB46h7Frk80sSYOUFSlSwCBgKlA0QBxTwEBAQEBAQEBKDyAoHCwI0AwIDYABkQhAAAaAAAA/wBGNTI1TTI0NUFLTEwKAAAA/ABERUxMIFUyNDEwCiAgAAAA/QA4TB5REQAKICAgICAgAToCAynxUJAFBAMCBxYBHxITFCAVEQYjCQcHZwMMABAAOC2DAQAA4wUDAQI6gBhxOC1AWCxFAAZEIQAAHgEdgBhxHBYgWCwlAAZEIQAAngEdAHJR0B4gbihVAAZEIQAAHowK0Iog4C0QED6WAAZEIQAAGAAAAAAAAAAAAAAAAAAAPg==");
     m_serverOutputDevice->setEdid(m_edid);
@@ -287,7 +284,7 @@ void TestWaylandOutputDevice::testModeChanges()
     outputChanged.clear();
     QSignalSpy modeChangedSpy(&output, &KWayland::Client::OutputDevice::modeChanged);
     QVERIFY(modeChangedSpy.isValid());
-    m_serverOutputDevice->setCurrentMode(0);
+    m_serverOutputDevice->setCurrentMode(QSize(800, 600), 60000);
     QVERIFY(doneSpy.wait());
     QCOMPARE(modeChangedSpy.size(), 2);
     // the one which lost the current flag
@@ -314,7 +311,7 @@ void TestWaylandOutputDevice::testModeChanges()
     // change once more
     outputChanged.clear();
     modeChangedSpy.clear();
-    m_serverOutputDevice->setCurrentMode(2);
+    m_serverOutputDevice->setCurrentMode(QSize(800, 600), 60000);
     QVERIFY(doneSpy.wait());
     QCOMPARE(modeChangedSpy.size(), 2);
     // the one which lost the current flag

@@ -19,7 +19,8 @@ public:
     OutputDeviceInterface *outputDevice;
 
     OutputDeviceInterface::Enablement enabled;
-    int modeId;
+    QSize size;
+    int refreshRate;
     OutputDeviceInterface::Transform transform;
     QPoint position;
     qreal scale;
