@@ -1,4 +1,6 @@
 set(SERVER_LIB_SRCS
+    3rdparty/xcursor.c
+
     abstract_data_source.cpp
     appmenu_interface.cpp
     blur_interface.cpp
@@ -26,6 +28,7 @@ set(SERVER_LIB_SRCS
     keyboard_interface.cpp
     keyboard_shortcuts_inhibit_v1_interface.cpp
     keystate_interface.cpp
+    kxcursortheme.cpp
     layershell_v1_interface.cpp
     linuxdmabuf_v1_interface.cpp
     output_interface.cpp
@@ -337,6 +340,7 @@ set(SERVER_LIB_HEADERS
   keyboard_interface.h
   keyboard_shortcuts_inhibit_v1_interface.h
   keystate_interface.h
+  kxcursortheme.h
   layershell_v1_interface.h
   linuxdmabuf_v1_interface.h
   output_interface.h
