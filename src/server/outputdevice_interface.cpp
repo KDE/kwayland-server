@@ -190,6 +190,57 @@ int OutputDeviceInterface::refreshRate() const
     return d->currentMode->refreshRate();
 }
 
+void OutputDeviceInterface::setModes(QList<Mode> &new_modes)
+{
+    const auto clientResources = d->resourceMap();
+
+    // remove previous modes
+    for (auto it = d->modes.begin(); it != d->modes.end(); ++it) {
+        for (auto resource : clientResources) {
+            (*it).send_finished(resource->handle);
+        }
+    }
+    d->modes.clear();
+
+    d->currentMode = nullptr;
+
+    for (Mode &mode: new_modes){
+
+        OutputDeviceMode *outputDeviceMode = new OutputDeviceMode(d->display.data(), mode);
+        d->modes << *outputDeviceMode;
+
+        if (d->currentMode == nullptr) {
+            d->currentMode = outputDeviceMode;
+            mode.flags |= ModeFlag::Current;
+
+        } else if (mode.flags.testFlag(ModeFlag::Current)) {
+
+            // unset
+            d->currentMode->mode().flags &= ~uint(ModeFlag::Current);
+
+            d->currentMode = outputDeviceMode;
+            mode.flags |= ModeFlag::Current;
+        }
+    }
+
+    for (auto it = d->modes.begin(); it != d->modes.end(); ++it) {
+        for (auto resource : clientResources) {
+            if (!(*it).mode().flags.testFlag(ModeFlag::Current)) {
+                d->sendMode(resource, *it);
+            }
+        }
+    }
+
+    for (auto resource : clientResources) {
+        d->sendMode(resource, *d->currentMode);
+        d->sendDone(resource);
+    }
+
+    Q_EMIT modesChanged();
+    Q_EMIT currentModeChanged();
+
+}
+
 void OutputDeviceInterface::addMode(Mode &mode)
 {
     Q_ASSERT(mode.size.isValid());
@@ -365,7 +416,7 @@ void OutputDeviceInterfacePrivate::sendMode(Resource *resource, OutputDeviceMode
     auto *clientModeResource = mode.add(resource->client(), s_version);
 
     send_mode(resource->handle,
-                clientModeResource->handle);
+              clientModeResource->handle);
 }
 
 void OutputDeviceInterfacePrivate::sendGeometry(Resource *resource)

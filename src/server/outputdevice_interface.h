@@ -124,6 +124,8 @@ public:
     void setTransform(Transform transform);
     void setColorCurves(const ColorCurves &colorCurves);
 
+
+    void setModes(QList<Mode> &modes);
     /**
      * Add an additional mode to this output device. This is only allowed before create() is called
      * on the object.
