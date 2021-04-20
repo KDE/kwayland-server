@@ -62,7 +62,7 @@ void OutputDeviceMode::org_kde_kwin_outputdevice_mode_bind_resource(QtWaylandSer
 
 void OutputDeviceMode::org_kde_kwin_outputdevice_mode_destroy_resource(QtWaylandServer::org_kde_kwin_outputdevice_mode::Resource *resource)
 {
-    send_finished(resource->handle);
+    send_removed(resource->handle);
 }
 
 
@@ -197,7 +197,7 @@ void OutputDeviceInterface::setModes(QList<Mode> &new_modes)
     // remove previous modes
     for (auto it = d->modes.begin(); it != d->modes.end(); ++it) {
         for (auto resource : clientResources) {
-            (*it).send_finished(resource->handle);
+            (*it).send_removed(resource->handle);
         }
     }
     d->modes.clear();
@@ -224,8 +224,8 @@ void OutputDeviceInterface::setModes(QList<Mode> &new_modes)
     }
 
     for (auto it = d->modes.begin(); it != d->modes.end(); ++it) {
-        for (auto resource : clientResources) {
-            if (!(*it).mode().flags.testFlag(ModeFlag::Current)) {
+        if (!(*it).mode().flags.testFlag(ModeFlag::Current)) {
+            for (auto resource : clientResources) {
                 d->sendMode(resource, *it);
             }
         }
@@ -238,7 +238,6 @@ void OutputDeviceInterface::setModes(QList<Mode> &new_modes)
 
     Q_EMIT modesChanged();
     Q_EMIT currentModeChanged();
-
 }
 
 void OutputDeviceInterface::addMode(Mode &mode)
@@ -415,8 +414,13 @@ void OutputDeviceInterfacePrivate::sendMode(Resource *resource, OutputDeviceMode
     // bind to client
     auto *clientModeResource = mode.add(resource->client(), s_version);
 
-    send_mode(resource->handle,
-              clientModeResource->handle);
+    send_mode(resource->handle, clientModeResource->handle);
+    mode.send_size(clientModeResource->handle, mode.size().width(), mode.size().height());
+    mode.send_refresh(clientModeResource->handle, mode.refreshRate());
+
+    if (mode.flags().testFlag(OutputDeviceInterface::ModeFlag::Preferred)) {
+        mode.send_preferred(clientModeResource->handle);
+    }
 }
 
 void OutputDeviceInterfacePrivate::sendGeometry(Resource *resource)
