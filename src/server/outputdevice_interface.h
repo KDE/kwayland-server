@@ -134,6 +134,7 @@ public:
      */
     void addMode(Mode &mode);
     void setCurrentMode(OutputDeviceMode &mode);
+    static Mode getMode(wl_resource* resource);
     /**
      * Makes the mode with the specified @a size and @a refreshRate current.
      * Returns @c false if no mode with the given attributes exists; otherwise returns @c true.

@@ -64,12 +64,11 @@ void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_enabl
 void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_mode(Resource *resource, struct ::wl_resource *outputdevice, struct ::wl_resource *modeResource)
 {
     Q_UNUSED(resource);
-    Q_UNUSED(modeResource);
 
-    OutputDeviceInterface *output = OutputDeviceInterface::get(outputdevice);
+    OutputDeviceInterface::Mode mode = OutputDeviceInterface::getMode(modeResource);
 
-    pendingChanges(output)->d->size = output->pixelSize();
-    pendingChanges(output)->d->refreshRate = output->refreshRate();
+    pendingChanges(output)->d->size = mode.size;
+    pendingChanges(output)->d->refreshRate = mode.refreshRate;
 }
 
 void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_transform(Resource *resource, wl_resource *outputdevice, int32_t transform)

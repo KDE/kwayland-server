@@ -50,6 +50,19 @@ private:
     OutputDeviceInterface::Mode m_mode;
 };
 
+OutputDeviceInterface::Mode OutputDeviceInterface::getMode(wl_resource* resource)
+{
+    if (auto d = resource_cast<OutputDeviceMode *>(resource)) {
+        return Mode{
+            d->size(),
+            d->refreshRate(),
+            d->flags()
+        };
+    }
+    qCWarning(KWAYLAND_SERVER) << "could not find mode" << resource;
+    return Mode{};
+}
+
 void OutputDeviceMode::org_kde_kwin_outputdevice_mode_bind_resource(QtWaylandServer::org_kde_kwin_outputdevice_mode::Resource *resource)
 {
     send_size(resource->handle, m_mode.size.width(), m_mode.size.height());
@@ -219,7 +232,6 @@ void OutputDeviceInterface::setModes(QList<Mode> &new_modes)
             d->currentMode->mode().flags &= ~uint(ModeFlag::Current);
 
             d->currentMode = outputDeviceMode;
-            mode.flags |= ModeFlag::Current;
         }
     }
 
