@@ -65,6 +65,7 @@ void OutputConfigurationInterfacePrivate::org_kde_kwin_outputconfiguration_mode(
 {
     Q_UNUSED(resource);
 
+    OutputDeviceInterface *output = OutputDeviceInterface::get(outputdevice);
     OutputDeviceInterface::Mode mode = OutputDeviceInterface::getMode(modeResource);
 
     pendingChanges(output)->d->size = mode.size;
