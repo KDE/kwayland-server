@@ -121,6 +121,9 @@ void XdgToplevelDecorationV1InterfacePrivate::handleSurfaceConfigure(quint32 ser
     }
 
     switch (requestedMode) {
+    case XdgToplevelDecorationV1Interface::Mode::None: // Faked as server_side mode.
+        send_configure(QtWaylandServer::zxdg_toplevel_decoration_v1::mode_server_side);
+        break;
     case XdgToplevelDecorationV1Interface::Mode::Client:
         send_configure(QtWaylandServer::zxdg_toplevel_decoration_v1::mode_client_side);
         break;

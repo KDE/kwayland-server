@@ -62,7 +62,7 @@ class KWAYLANDSERVER_EXPORT XdgToplevelDecorationV1Interface : public QObject
     Q_OBJECT
 
 public:
-    enum class Mode { Undefined, Client, Server };
+    enum class Mode { Undefined, None, Client, Server };
     Q_ENUM(Mode)
 
     /**
