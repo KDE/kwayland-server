@@ -7,6 +7,7 @@
 #pragma once
 
 #include "output_interface.h"
+#include "tearing_control_v1_interface.h"
 
 #include <QMatrix4x4>
 #include <QObject>
@@ -299,6 +300,11 @@ public:
      * @see inhibitsIdleChanged
      */
     bool inhibitsIdle() const;
+
+    /**
+     * @returns what hint regarding the use of asynchronous page flips is set by the client
+     **/
+    SurfaceTearingControlV1Interface::PresentationHint presentationHint() const;
 
     /**
      * @returns The SurfaceInterface for the @p native resource.

@@ -269,6 +269,11 @@ void SurfaceInterfacePrivate::installIdleInhibitor(IdleInhibitorV1Interface *inh
     }
 }
 
+void SurfaceInterfacePrivate::setTearingControl(const QPointer<SurfaceTearingControlV1Interface> tearing)
+{
+    tearingControl = tearing;
+}
+
 void SurfaceInterfacePrivate::surface_destroy_resource(Resource *)
 {
     emit q->aboutToBeDestroyed();
@@ -571,6 +576,9 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
     if (confinedPointer) {
         auto confinedPointerPrivate = ConfinedPointerV1InterfacePrivate::get(confinedPointer);
         confinedPointerPrivate->commit();
+    }
+    if (tearingControl) {
+        tearingControl->commit();
     }
 
     *source = State{};
@@ -908,6 +916,15 @@ ConfinedPointerV1Interface *SurfaceInterface::confinedPointer() const
 bool SurfaceInterface::inhibitsIdle() const
 {
     return !d->idleInhibitors.isEmpty();
+}
+
+SurfaceTearingControlV1Interface::PresentationHint SurfaceInterface::presentationHint() const
+{
+    if (d->tearingControl) {
+        return d->tearingControl->presentationHint();
+    } else {
+        return SurfaceTearingControlV1Interface::PresentationHint::vsync;
+    }
 }
 
 void SurfaceInterface::setDataProxy(SurfaceInterface *surface)

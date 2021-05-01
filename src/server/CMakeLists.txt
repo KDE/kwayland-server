@@ -56,6 +56,7 @@ set(SERVER_LIB_SRCS
     surface_interface.cpp
     surfacerole.cpp
     tablet_v2_interface.cpp
+    tearing_control_v1_interface.cpp
     textinput_v2_interface.cpp
     textinput_v3_interface.cpp
     touch_interface.cpp
@@ -269,6 +270,11 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     BASENAME input-method-unstable-v1
 )
 
+ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
+    PROTOCOL ${WaylandProtocols_DATADIR}/unstable/tearing-control/tearing-control-unstable-v1.xml
+    BASENAME tearing-control-unstable-v1
+)
+
 add_library(KWaylandServer ${SERVER_LIB_SRCS})
 add_library(Plasma::KWaylandServer ALIAS KWaylandServer)
 ecm_generate_export_header(KWaylandServer
@@ -362,6 +368,7 @@ set(SERVER_LIB_HEADERS
   subcompositor_interface.h
   surface_interface.h
   tablet_v2_interface.h
+  tearing_control_v1_interface.h
   textinput.h
   textinput_v2_interface.h
   textinput_v3_interface.h

@@ -86,6 +86,7 @@ public:
     void installPointerConstraint(LockedPointerV1Interface *lock);
     void installPointerConstraint(ConfinedPointerV1Interface *confinement);
     void installIdleInhibitor(IdleInhibitorV1Interface *inhibitor);
+    void setTearingControl(const QPointer<SurfaceTearingControlV1Interface> tearing);
 
     void commit();
     QMatrix4x4 buildSurfaceToBufferMatrix(const State *state);
@@ -103,6 +104,8 @@ public:
     QMatrix4x4 bufferToSurfaceMatrix;
     QSize bufferSize;
     QRegion inputRegion;
+
+    QPointer<SurfaceTearingControlV1Interface> tearingControl;
 
     // workaround for https://bugreports.qt.io/browse/QTBUG-52192
     // A subsurface needs to be considered mapped even if it doesn't have a buffer attached
