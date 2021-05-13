@@ -27,7 +27,7 @@ include(ECMQtDeclareLoggingCategory)
 include(ECMPoQmTools)
 include(ECMAddQch)
 include(KDEInstallDirs)
-include(KDEFrameworkCompilerSettings NO_POLICY_SCOPE)
+include(KDECompilerSettings NO_POLICY_SCOPE)
 include(KDECMakeSettings)
 
 option(BUILD_QCH "Build API documentation in QCH format (for e.g. Qt Assistant, Qt Creator & KDevelop)" OFF)
