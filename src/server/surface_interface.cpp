@@ -566,11 +566,11 @@ void SurfaceInterfacePrivate::swapStates(SurfaceState *source, SurfaceState *tar
     }
     if (lockedPointer) {
         auto lockedPointerPrivate = LockedPointerV1InterfacePrivate::get(lockedPointer);
-        lockedPointerPrivate->commit();
+        lockedPointerPrivate->applyState();
     }
     if (confinedPointer) {
         auto confinedPointerPrivate = ConfinedPointerV1InterfacePrivate::get(confinedPointer);
-        confinedPointerPrivate->commit();
+        confinedPointerPrivate->applyState();
     }
 
     source->bufferIsSet = false;

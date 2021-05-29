@@ -69,7 +69,8 @@ void PointerConstraintsV1InterfacePrivate::zwp_pointer_constraints_v1_lock_point
         return;
     }
 
-    auto lockedPointer = new LockedPointerV1Interface(LockedPointerV1Interface::LifeTime(lifetime),
+    auto lockedPointer = new LockedPointerV1Interface(surface,
+                                                      LockedPointerV1Interface::LifeTime(lifetime),
                                                       regionFromResource(region_resource),
                                                       lockedPointerResource);
 
@@ -117,7 +118,8 @@ void PointerConstraintsV1InterfacePrivate::zwp_pointer_constraints_v1_confine_po
         return;
     }
 
-    auto confinedPointer = new ConfinedPointerV1Interface(ConfinedPointerV1Interface::LifeTime(lifetime),
+    auto confinedPointer = new ConfinedPointerV1Interface(surface,
+                                                          ConfinedPointerV1Interface::LifeTime(lifetime),
                                                           regionFromResource(region_resource),
                                                           confinedPointerResource);
 
@@ -144,27 +146,45 @@ LockedPointerV1InterfacePrivate *LockedPointerV1InterfacePrivate::get(LockedPoin
     return q->d.data();
 }
 
+LockedPointerV1State *LockedPointerV1State::get(SurfaceState *state)
+{
+    if (!state->lockedPointerV1) {
+        state->lockedPointerV1.reset(new LockedPointerV1State);
+    }
+    return static_cast<LockedPointerV1State *>(state->lockedPointerV1.data());
+}
+
 LockedPointerV1InterfacePrivate::LockedPointerV1InterfacePrivate(LockedPointerV1Interface *q,
                                                                  LockedPointerV1Interface::LifeTime lifeTime,
+                                                                 SurfaceInterface *surface,
                                                                  const QRegion &region,
                                                                  ::wl_resource *resource)
     : QtWaylandServer::zwp_locked_pointer_v1(resource)
     , q(q)
     , lifeTime(lifeTime)
-    , region(region)
+    , surface(surface)
 {
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    LockedPointerV1State *current = LockedPointerV1State::get(&surfacePrivate->current);
+    current->region = region;
 }
 
-void LockedPointerV1InterfacePrivate::commit()
+void LockedPointerV1InterfacePrivate::applyState()
 {
-    if (hasPendingRegion) {
-        region = pendingRegion;
-        hasPendingRegion = false;
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    auto current = LockedPointerV1State::get(&surfacePrivate->current);
+    auto pending = LockedPointerV1State::get(&surfacePrivate->pending);
+
+    if (pending->regionIsSet) {
+        current->region = pending->region;
+        pending->regionIsSet = false;
         Q_EMIT q->regionChanged();
     }
-    if (hasPendingHint) {
-        hint = pendingHint;
-        hasPendingHint = false;
+    if (pending->hintIsSet) {
+        current->hint = pending->hint;
+        pending->hintIsSet = false;
         Q_EMIT q->cursorPositionHintChanged();
     }
 }
@@ -186,21 +206,34 @@ void LockedPointerV1InterfacePrivate::zwp_locked_pointer_v1_set_cursor_position_
                                                                                      wl_fixed_t surface_y)
 {
     Q_UNUSED(resource)
-    pendingHint = QPointF(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
-    hasPendingHint = true;
+    if (Q_UNLIKELY(!surface)) {
+        return;
+    }
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    auto pending = LockedPointerV1State::get(&surfacePrivate->pending);
+    pending->hint = QPointF(wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
+    pending->hintIsSet = true;
 }
 
 void LockedPointerV1InterfacePrivate::zwp_locked_pointer_v1_set_region(Resource *resource,
                                                                        ::wl_resource *region_resource)
 {
     Q_UNUSED(resource)
-    pendingRegion = regionFromResource(region_resource);
-    hasPendingRegion = true;
+    if (Q_UNLIKELY(!surface)) {
+        return;
+    }
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    auto pending = LockedPointerV1State::get(&surfacePrivate->pending);
+    pending->region = regionFromResource(region_resource);
+    pending->regionIsSet = true;
 }
 
-LockedPointerV1Interface::LockedPointerV1Interface(LifeTime lifeTime, const QRegion &region,
+LockedPointerV1Interface::LockedPointerV1Interface(SurfaceInterface *surface,
+                                                   LifeTime lifeTime, const QRegion &region,
                                                    ::wl_resource *resource)
-    : d(new LockedPointerV1InterfacePrivate(this, lifeTime, region, resource))
+    : d(new LockedPointerV1InterfacePrivate(this, lifeTime, surface, region, resource))
 {
 }
 
@@ -215,12 +248,20 @@ LockedPointerV1Interface::LifeTime LockedPointerV1Interface::lifeTime() const
 
 QRegion LockedPointerV1Interface::region() const
 {
-    return d->region;
+    if (Q_UNLIKELY(!d->surface)) {
+        return QRegion();
+    }
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(d->surface);
+    return LockedPointerV1State::get(&surfacePrivate->current)->region;
 }
 
 QPointF LockedPointerV1Interface::cursorPositionHint() const
 {
-    return d->hint;
+    if (Q_UNLIKELY(!d->surface)) {
+        return QPointF(-1, -1);
+    }
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(d->surface);
+    return LockedPointerV1State::get(&surfacePrivate->current)->hint;
 }
 
 bool LockedPointerV1Interface::isLocked() const
@@ -230,11 +271,15 @@ bool LockedPointerV1Interface::isLocked() const
 
 void LockedPointerV1Interface::setLocked(bool locked)
 {
+    if (Q_UNLIKELY(!d->surface)) {
+        return;
+    }
     if (d->isLocked == locked) {
         return;
     }
     if (!locked) {
-        d->hint = QPointF(-1, -1);
+        SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(d->surface);
+        LockedPointerV1State::get(&surfacePrivate->current)->hint = QPointF(-1, -1);
     }
     d->isLocked = locked;
     if (d->isLocked) {
@@ -250,22 +295,40 @@ ConfinedPointerV1InterfacePrivate *ConfinedPointerV1InterfacePrivate::get(Confin
     return q->d.data();
 }
 
+ConfinedPointerV1State *ConfinedPointerV1State::get(SurfaceState *state)
+{
+    if (!state->confinedPointerV1) {
+        state->confinedPointerV1.reset(new ConfinedPointerV1State);
+    }
+    return static_cast<ConfinedPointerV1State *>(state->confinedPointerV1.data());
+}
+
 ConfinedPointerV1InterfacePrivate::ConfinedPointerV1InterfacePrivate(ConfinedPointerV1Interface *q,
                                                                      ConfinedPointerV1Interface::LifeTime lifeTime,
+                                                                     SurfaceInterface *surface,
                                                                      const QRegion &region,
                                                                      ::wl_resource *resource)
     : QtWaylandServer::zwp_confined_pointer_v1(resource)
     , q(q)
     , lifeTime(lifeTime)
-    , region(region)
+    , surface(surface)
 {
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    auto current = LockedPointerV1State::get(&surfacePrivate->current);
+    current->region = region;
 }
 
-void ConfinedPointerV1InterfacePrivate::commit()
+void ConfinedPointerV1InterfacePrivate::applyState()
 {
-    if (hasPendingRegion) {
-        region = pendingRegion;
-        hasPendingRegion = false;
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    auto current = ConfinedPointerV1State::get(&surfacePrivate->current);
+    auto pending = ConfinedPointerV1State::get(&surfacePrivate->pending);
+
+    if (pending->regionIsSet) {
+        current->region = pending->region;
+        pending->regionIsSet = false;
         Q_EMIT q->regionChanged();
     }
 }
@@ -285,13 +348,20 @@ void ConfinedPointerV1InterfacePrivate::zwp_confined_pointer_v1_set_region(Resou
                                                                            ::wl_resource *region_resource)
 {
     Q_UNUSED(resource)
-    pendingRegion = regionFromResource(region_resource);
-    hasPendingRegion = true;
+    if (Q_UNLIKELY(!surface)) {
+        return;
+    }
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
+
+    auto pending = ConfinedPointerV1State::get(&surfacePrivate->pending);
+    pending->region = regionFromResource(region_resource);
+    pending->regionIsSet = true;
 }
 
-ConfinedPointerV1Interface::ConfinedPointerV1Interface(LifeTime lifeTime, const QRegion &region,
+ConfinedPointerV1Interface::ConfinedPointerV1Interface(SurfaceInterface *surface,
+                                                       LifeTime lifeTime, const QRegion &region,
                                                        ::wl_resource *resource)
-    : d(new ConfinedPointerV1InterfacePrivate(this, lifeTime, region, resource))
+    : d(new ConfinedPointerV1InterfacePrivate(this, lifeTime, surface, region, resource))
 {
 }
 
@@ -306,7 +376,11 @@ ConfinedPointerV1Interface::LifeTime ConfinedPointerV1Interface::lifeTime() cons
 
 QRegion ConfinedPointerV1Interface::region() const
 {
-    return d->region;
+    if (Q_UNLIKELY(!d->surface)) {
+        return QRegion();
+    }
+    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(d->surface);
+    return ConfinedPointerV1State::get(&surfacePrivate->current)->region;
 }
 
 bool ConfinedPointerV1Interface::isConfined() const

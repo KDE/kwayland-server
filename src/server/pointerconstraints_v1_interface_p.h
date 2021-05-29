@@ -8,11 +8,34 @@
 #pragma once
 
 #include "pointerconstraints_v1_interface.h"
+#include "surface_interface_p.h"
 
 #include "qwayland-server-pointer-constraints-unstable-v1.h"
 
+#include <QPointer>
+
 namespace KWaylandServer
 {
+
+class LockedPointerV1State : public SurfaceAttachedState
+{
+public:
+    static LockedPointerV1State *get(SurfaceState *state);
+
+    QRegion region;
+    QPointF hint = QPointF(-1, -1);
+    bool regionIsSet = false;
+    bool hintIsSet = false;
+};
+
+class ConfinedPointerV1State : public SurfaceAttachedState
+{
+public:
+    static ConfinedPointerV1State *get(SurfaceState *state);
+
+    QRegion region;
+    bool regionIsSet = false;
+};
 
 class PointerConstraintsV1InterfacePrivate : public QtWaylandServer::zwp_pointer_constraints_v1
 {
@@ -40,18 +63,14 @@ public:
 
     LockedPointerV1InterfacePrivate(LockedPointerV1Interface *q,
                                     LockedPointerV1Interface::LifeTime lifeTime,
+                                    SurfaceInterface *surface,
                                     const QRegion &region, ::wl_resource *resource);
 
-    void commit();
+    void applyState();
 
     LockedPointerV1Interface *q;
     LockedPointerV1Interface::LifeTime lifeTime;
-    QRegion region;
-    QRegion pendingRegion;
-    QPointF hint = QPointF(-1, -1);
-    QPointF pendingHint;
-    bool hasPendingRegion = false;
-    bool hasPendingHint = false;
+    QPointer<SurfaceInterface> surface;
     bool isLocked = false;
 
 protected:
@@ -71,15 +90,14 @@ public:
 
     ConfinedPointerV1InterfacePrivate(ConfinedPointerV1Interface *q,
                                       ConfinedPointerV1Interface::LifeTime lifeTime,
+                                      SurfaceInterface *surface,
                                       const QRegion &region, ::wl_resource *resource);
 
-    void commit();
+    void applyState();
 
     ConfinedPointerV1Interface *q;
     ConfinedPointerV1Interface::LifeTime lifeTime;
-    QRegion region;
-    QRegion pendingRegion;
-    bool hasPendingRegion = false;
+    QPointer<SurfaceInterface> surface;
     bool isConfined = false;
 
 protected:

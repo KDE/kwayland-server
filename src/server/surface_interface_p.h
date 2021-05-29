@@ -34,6 +34,12 @@ protected:
     void callback_destroy_resource(Resource *resource) override;
 };
 
+class SurfaceAttachedState
+{
+public:
+    virtual ~SurfaceAttachedState() {}
+};
+
 struct SurfaceState
 {
     QRegion damage = QRegion();
@@ -69,6 +75,9 @@ struct SurfaceState
         bool sourceGeometryIsSet = false;
         bool destinationSizeIsSet = false;
     } viewport;
+
+    QScopedPointer<SurfaceAttachedState> lockedPointerV1;
+    QScopedPointer<SurfaceAttachedState> confinedPointerV1;
 };
 
 class SurfaceInterfacePrivate : public QtWaylandServer::wl_surface
