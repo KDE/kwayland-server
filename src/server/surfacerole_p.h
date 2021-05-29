@@ -25,7 +25,8 @@ public:
         return m_surface;
     }
 
-    virtual void commit() = 0;
+    virtual void commit() {}
+    virtual void applyState() {}
 
     static SurfaceRole *get(SurfaceInterface *surface);
 

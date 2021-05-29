@@ -572,6 +572,9 @@ void SurfaceInterfacePrivate::swapStates(SurfaceState *source, SurfaceState *tar
         auto confinedPointerPrivate = ConfinedPointerV1InterfacePrivate::get(confinedPointer);
         confinedPointerPrivate->applyState();
     }
+    if (role) {
+        role->applyState();
+    }
 
     source->bufferIsSet = false;
     source->bufferScaleIsSet = false;

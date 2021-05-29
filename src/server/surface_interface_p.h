@@ -78,6 +78,8 @@ struct SurfaceState
 
     QScopedPointer<SurfaceAttachedState> lockedPointerV1;
     QScopedPointer<SurfaceAttachedState> confinedPointerV1;
+    QScopedPointer<SurfaceAttachedState> xdgSurface;
+    QScopedPointer<SurfaceAttachedState> xdgToplevel;
 };
 
 class SurfaceInterfacePrivate : public QtWaylandServer::wl_surface

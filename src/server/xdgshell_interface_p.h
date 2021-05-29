@@ -9,7 +9,7 @@
 #include "xdgshell_interface.h"
 #include "qwayland-server-xdg-shell.h"
 
-#include "surface_interface.h"
+#include "surface_interface_p.h"
 #include "surfacerole_p.h"
 
 namespace KWaylandServer
@@ -84,12 +84,24 @@ protected:
     void xdg_positioner_set_parent_configure(Resource *resource, uint32_t serial) override;
 };
 
+class XdgSurfaceState : public SurfaceAttachedState
+{
+public:
+    static XdgSurfaceState *get(SurfaceState *state);
+    static const XdgSurfaceState *get(const SurfaceState *state);
+
+    QRect windowGeometry;
+    quint32 acknowledgedConfigure;
+    bool acknowledgedConfigureIsSet = false;
+    bool windowGeometryIsSet = false;
+};
+
 class XdgSurfaceInterfacePrivate : public QtWaylandServer::xdg_surface
 {
 public:
     XdgSurfaceInterfacePrivate(XdgSurfaceInterface *xdgSurface);
 
-    void commit();
+    void applyState();
     void reset();
 
     XdgSurfaceInterface *q;
@@ -99,14 +111,6 @@ public:
     QPointer<SurfaceInterface> surface;
     bool isMapped = false;
     bool isConfigured = false;
-
-    struct State
-    {
-        QRect windowGeometry;
-    };
-
-    State next;
-    State current;
 
     static XdgSurfaceInterfacePrivate *get(XdgSurfaceInterface *surface);
 
@@ -119,12 +123,21 @@ protected:
     void xdg_surface_ack_configure(Resource *resource, uint32_t serial) override;
 };
 
+class XdgToplevelState : public SurfaceAttachedState
+{
+public:
+    static XdgToplevelState *get(SurfaceState *state);
+
+    QSize minimumSize;
+    QSize maximumSize;
+};
+
 class XdgToplevelInterfacePrivate : public SurfaceRole, public QtWaylandServer::xdg_toplevel
 {
 public:
     XdgToplevelInterfacePrivate(XdgToplevelInterface *toplevel, XdgSurfaceInterface *surface);
 
-    void commit() override;
+    void applyState() override;
     void reset();
 
     static XdgToplevelInterfacePrivate *get(XdgToplevelInterface *toplevel);
@@ -137,15 +150,6 @@ public:
 
     QString windowTitle;
     QString windowClass;
-
-    struct State
-    {
-        QSize minimumSize;
-        QSize maximumSize;
-    };
-
-    State next;
-    State current;
 
 protected:
     void xdg_toplevel_destroy_resource(Resource *resource) override;
@@ -172,7 +176,7 @@ public:
 
     XdgPopupInterfacePrivate(XdgPopupInterface *popup, XdgSurfaceInterface *surface);
 
-    void commit() override;
+    void applyState() override;
     void reset();
 
     XdgPopupInterface *q;
