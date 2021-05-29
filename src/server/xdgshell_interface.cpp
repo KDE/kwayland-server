@@ -338,14 +338,8 @@ void XdgToplevelInterfacePrivate::commit()
         return;
     }
 
-    if (current.minimumSize != next.minimumSize) {
-        current.minimumSize = next.minimumSize;
-        Q_EMIT q->minimumSizeChanged(current.minimumSize);
-    }
-    if (current.maximumSize != next.maximumSize) {
-        current.maximumSize = next.maximumSize;
-        Q_EMIT q->maximumSizeChanged(current.maximumSize);
-    }
+    current.minimumSize = next.minimumSize;
+    current.maximumSize = next.maximumSize;
 }
 
 void XdgToplevelInterfacePrivate::reset()

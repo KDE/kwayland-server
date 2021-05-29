@@ -308,16 +308,6 @@ Q_SIGNALS:
     void windowMenuRequested(KWaylandServer::SeatInterface *seat, const QPoint &pos, quint32 serial);
 
     /**
-     * This signal is emitted when the toplevel's minimum size has been changed.
-     */
-    void minimumSizeChanged(const QSize &size);
-
-    /**
-     * This signal is emitted when the toplevel's maximum size has been changed.
-     */
-    void maximumSizeChanged(const QSize &size);
-
-    /**
      * This signal is emitted when the toplevel wants to be interactively moved. The \a seat and
      * the \a serial indicate the user action in response to which this request has been issued.
      */
