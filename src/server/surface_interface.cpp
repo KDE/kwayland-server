@@ -573,8 +573,21 @@ void SurfaceInterfacePrivate::swapStates(SurfaceState *source, SurfaceState *tar
         confinedPointerPrivate->commit();
     }
 
-    *source = SurfaceState{};
+    source->bufferIsSet = false;
+    source->bufferScaleIsSet = false;
+    source->bufferTransformIsSet = false;
+    source->blurIsSet = false;
+    source->bufferIsSet = false;
+    source->contrastIsSet = false;
+    source->frameCallbacks.clear();
+    source->inputIsSet = false;
+    source->opaqueIsSet = false;
+    source->shadowIsSet = false;
+    source->slideIsSet = false;
     source->children = target->children;
+    source->childrenChanged = false;
+    source->viewport.sourceGeometryIsSet = false;
+    source->viewport.destinationSizeIsSet = false;
 
     if (!emitChanged) {
         return;
