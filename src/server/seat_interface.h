@@ -592,6 +592,9 @@ public:
     TextInputV2Interface *textInputV2() const;
     
     TextInputV3Interface *textInputV3() const;
+
+    void setKeyboardGrab(KeyboardInterface *keyboard);
+    KeyboardInterface *keyboardGrab() const;
     ///@}
 
     /**
@@ -628,6 +631,7 @@ Q_SIGNALS:
     void pointerPosChanged(const QPointF &pos);
     void touchMoved(qint32 id, quint32 serial, const QPointF &globalPosition);
     void timestampChanged(quint32);
+    void keyboardGrabChanged();
 
     /**
      * Emitted whenever the selection changes

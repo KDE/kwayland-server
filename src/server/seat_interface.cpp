@@ -965,18 +965,21 @@ KeyboardInterface *SeatInterface::keyboard() const
 
 void SeatInterface::notifyKeyboardKey(quint32 keyCode, KeyboardKeyState state)
 {
-    if (!d->keyboard) {
+    auto keyboard = d->activeKeyboard();
+    qDebug() << "sending key" << keyboard;
+    if (!keyboard) {
         return;
     }
-    d->keyboard->sendKey(keyCode, state);
+    keyboard->sendKey(keyCode, state);
 }
 
 void SeatInterface::notifyKeyboardModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group)
 {
-    if (!d->keyboard) {
+    auto keyboard = d->activeKeyboard();
+    if (!keyboard) {
         return;
     }
-    d->keyboard->sendModifiers(depressed, latched, locked, group);
+    keyboard->sendModifiers(depressed, latched, locked, group);
 }
 
 void SeatInterface::notifyTouchCancel()
@@ -1307,6 +1310,23 @@ void SeatInterface::setPrimarySelection(AbstractDataSource *selection)
     }
 
     Q_EMIT primarySelectionChanged(selection);
+}
+
+void SeatInterface::setKeyboardGrab(KeyboardInterface *keyboard)
+{
+    if (keyboard == d->keyboardGrab.data())
+        return;
+
+    d->keyboardGrab.reset(keyboard);
+    if (d->keyboardGrab) {
+        d->keyboardGrab->setFocusedSurface(focusedKeyboardSurface(), d->display->nextSerial());
+    }
+    Q_EMIT keyboardGrabChanged();
+}
+
+KeyboardInterface* SeatInterface::keyboardGrab() const
+{
+    return d->keyboardGrab.data();
 }
 
 }

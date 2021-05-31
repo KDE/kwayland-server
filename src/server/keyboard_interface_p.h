@@ -37,6 +37,7 @@ public:
     SurfaceInterface *focusedSurface = nullptr;
     QMetaObject::Connection destroyConnection;
     QByteArray keymap;
+    bool grabbed = false;
 
     struct {
         qint32 charactersPerSecond = 0;

@@ -48,6 +48,7 @@ public:
     quint32 accumulatedCapabilities = 0;
     quint32 capabilities = 0;
     QScopedPointer<KeyboardInterface> keyboard;
+    QScopedPointer<KeyboardInterface> keyboardGrab;
     QScopedPointer<PointerInterface> pointer;
     QScopedPointer<TouchInterface> touch;
     QVector<DataDeviceInterface*> dataDevices;
@@ -128,6 +129,10 @@ public:
         QMetaObject::Connection dragSourceDestroyConnection;
     };
     Drag drag;
+
+    KeyboardInterface *activeKeyboard() {
+        return keyboardGrab ? keyboardGrab.data() : keyboard.data();
+    }
 
 protected:
     void seat_bind_resource(Resource *resource) override;

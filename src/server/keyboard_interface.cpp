@@ -198,7 +198,7 @@ void KeyboardInterface::sendKey(quint32 key, KeyboardKeyState state)
         return;
     }
 
-    const QList<KeyboardInterfacePrivate::Resource *> keyboards = d->keyboardsForClient(d->focusedSurface->client());
+    const QList<KeyboardInterfacePrivate::Resource *> keyboards = d->grabbed ? d->resourceMap().values() : d->keyboardsForClient(d->focusedSurface->client());
     const quint32 serial = d->seat->display()->nextSerial();
     for (KeyboardInterfacePrivate::Resource *keyboardResource : keyboards) {
         d->send_key(keyboardResource->handle, serial, d->seat->timestamp(), key, quint32(state));
@@ -254,6 +254,11 @@ qint32 KeyboardInterface::keyRepeatDelay() const
 qint32 KeyboardInterface::keyRepeatRate() const
 {
     return d->keyRepeat.charactersPerSecond;
+}
+
+void KeyboardInterface::setGrabbed(bool grabbed)
+{
+    d->grabbed = grabbed;
 }
 
 }

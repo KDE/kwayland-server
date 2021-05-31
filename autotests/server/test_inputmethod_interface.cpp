@@ -20,10 +20,13 @@
 #include "KWayland/Client/registry.h"
 #include "KWayland/Client/seat.h"
 #include "KWayland/Client/surface.h"
+#include "KWayland/Client/keyboard.h"
 #include "KWayland/Client/output.h"
 
 #include "qwayland-input-method-unstable-v1.h"
 #include "qwayland-server-text-input-unstable-v1.h"
+
+#include <linux/input-event-codes.h>
 
 using namespace KWaylandServer;
 
@@ -147,7 +150,7 @@ private Q_SLOTS:
     void testContentHints();
     void testContentPurpose_data();
     void testContentPurpose();
-
+    void testKeyboardGrab();
 private:
     KWayland::Client::ConnectionThread *m_connection;
     KWayland::Client::EventQueue *m_queue;
@@ -178,7 +181,7 @@ void TestInputMethodInterface::initTestCase()
 
     m_seat = new SeatInterface(&m_display, this);
     m_serverCompositor = new CompositorInterface(&m_display, this);
-    m_inputMethodIface = new InputMethodV1Interface(&m_display, this);
+    m_inputMethodIface = new InputMethodV1Interface(m_seat, this);
     m_inputPanelIface = new InputPanelV1Interface(&m_display, this);
     new OutputInterface(&m_display, this);
 
@@ -593,6 +596,53 @@ void TestInputMethodInterface::testContentPurpose()
     QVERIFY(!m_inputMethod->context());
 }
 
+void TestInputMethodInterface::testKeyboardGrab()
+{
+    m_seat->setHasKeyboard(true);
+
+    QVERIFY(m_inputMethodIface);
+    QSignalSpy inputMethodActivateSpy(m_inputMethod, &InputMethodV1::activated);
+    QSignalSpy keyboardGrabSpy(m_seat, &SeatInterface::keyboardGrabChanged);
+
+    m_inputMethodIface->sendActivate();
+    QVERIFY(inputMethodActivateSpy.wait());
+
+    QScopedPointer<KWayland::Client::Keyboard> normalKeyboard(m_clientSeat->createKeyboard(this));
+    QSignalSpy normalKeyboardEnteredSpy(normalKeyboard.data(), &KWayland::Client::Keyboard::entered);
+    m_seat->setFocusedKeyboardSurface(m_surfaces[0]);
+    QVERIFY(normalKeyboardEnteredSpy.count() || normalKeyboardEnteredSpy.wait());
+    QCOMPARE(normalKeyboardEnteredSpy.count(), 1);
+
+    QSignalSpy normalKeyboardSpy(normalKeyboard.data(), &KWayland::Client::Keyboard::keyChanged);
+    m_seat->notifyKeyboardKey(KEY_F2, KeyboardKeyState::Pressed);
+    m_seat->notifyKeyboardKey(KEY_F2, KeyboardKeyState::Released);
+    normalKeyboardSpy.wait();
+    QCOMPARE(normalKeyboardSpy.count(), 2);
+    normalKeyboardSpy.clear();
+
+    InputMethodV1Context *imContext = m_inputMethod->context();
+    QVERIFY(imContext);
+    KWayland::Client::Keyboard *keyboard = new KWayland::Client::Keyboard(this);
+    keyboard->setup(imContext->grab_keyboard());
+    QVERIFY(keyboard->isValid());
+
+    QVERIFY(keyboardGrabSpy.count() || keyboardGrabSpy.wait());
+    QSignalSpy keyboardSpy(keyboard, &KWayland::Client::Keyboard::keyChanged);
+    m_seat->notifyKeyboardKey(KEY_F1, KeyboardKeyState::Pressed);
+    m_seat->notifyKeyboardKey(KEY_F1, KeyboardKeyState::Released);
+    keyboardSpy.wait();
+    QCOMPARE(keyboardSpy.count(), 2);
+    QCOMPARE(normalKeyboardSpy.count(), 0);
+
+    m_inputMethodIface->sendDeactivate();
+    m_seat->notifyKeyboardKey(KEY_F2, KeyboardKeyState::Pressed);
+    m_seat->notifyKeyboardKey(KEY_F2, KeyboardKeyState::Released);
+    QVERIFY(normalKeyboardSpy.count() || normalKeyboardSpy.wait());
+    QCOMPARE(normalKeyboardSpy.count(), 2);
+    m_seat->setHasKeyboard(false);
+
+    m_seat->setFocusedKeyboardSurface(nullptr);
+}
 
 QTEST_GUILESS_MAIN(TestInputMethodInterface)
 #include "test_inputmethod_interface.moc"

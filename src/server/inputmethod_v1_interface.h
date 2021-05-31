@@ -18,6 +18,8 @@ namespace KWaylandServer
 class OutputInterface;
 class SurfaceInterface;
 class Display;
+class KeyboardInterface;
+class SeatInterface;
 class InputPanelSurfaceV1Interface;
 class InputMethodContextV1Interface;
 
@@ -37,7 +39,7 @@ class KWAYLANDSERVER_EXPORT InputMethodV1Interface : public QObject
 {
     Q_OBJECT
 public:
-    InputMethodV1Interface(Display *d, QObject *parent);
+    InputMethodV1Interface(SeatInterface *seat, QObject *parent);
     ~InputMethodV1Interface() override;
 
     /**
@@ -52,6 +54,8 @@ public:
     void sendDeactivate();
 
     InputMethodContextV1Interface *context() const;
+
+    SeatInterface *seat() const;
 
 private:
     QScopedPointer<InputMethodV1InterfacePrivate> d;
@@ -81,7 +85,7 @@ Q_SIGNALS:
     void deleteSurroundingText(qint32 index, quint32 length);
     void cursorPosition(qint32 index, qint32 anchor);
     void keysym(quint32 serial, quint32 time, quint32 sym, bool pressed, Qt::KeyboardModifiers modifiers);
-    void grabKeyboard(quint32 keyboard);
+    void grabKeyboard();
     void key(quint32 serial, quint32 time, quint32 key, bool pressed);
     void modifiers(quint32 serial, quint32 mods_depressed, quint32 mods_latched, quint32 mods_locked, quint32 group);
     void language(quint32 serial, const QString &language);
@@ -101,7 +105,7 @@ class KWAYLANDSERVER_EXPORT InputPanelV1Interface : public QObject
 {
     Q_OBJECT
 public:
-    InputPanelV1Interface(Display *display, QObject *parent);
+    InputPanelV1Interface(Display *d, QObject *parent);
     ~InputPanelV1Interface() override;
 
 Q_SIGNALS:
