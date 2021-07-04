@@ -36,6 +36,12 @@ protected:
 
 struct SurfaceState
 {
+    enum class OffsetSource {
+        None,
+        Attach,
+        Offset,
+    };
+
     QRegion damage = QRegion();
     QRegion bufferDamage = QRegion();
     QRegion opaque = QRegion();
@@ -51,9 +57,11 @@ struct SurfaceState
     bool childrenChanged = false;
     bool bufferScaleIsSet = false;
     bool bufferTransformIsSet = false;
+    bool offsetIsSet = false;
     qint32 bufferScale = 1;
     OutputInterface::Transform bufferTransform = OutputInterface::Transform::Normal;
     QList<KWaylandFrameCallback *> frameCallbacks;
+    OffsetSource offsetSource = OffsetSource::None;
     QPoint offset = QPoint();
     BufferInterface *buffer = nullptr;
     // stacking order: bottom (first) -> top (last)
@@ -140,6 +148,7 @@ protected:
     void surface_set_buffer_transform(Resource *resource, int32_t transform) override;
     void surface_set_buffer_scale(Resource *resource, int32_t scale) override;
     void surface_damage_buffer(Resource *resource, int32_t x, int32_t y, int32_t width, int32_t height) override;
+    void surface_offset(Resource *resource, int32_t x, int32_t y) override;
 
 private:
     QMetaObject::Connection constrainsOneShotConnection;

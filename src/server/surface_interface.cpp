@@ -282,9 +282,26 @@ void SurfaceInterfacePrivate::surface_destroy(Resource *resource)
 
 void SurfaceInterfacePrivate::surface_attach(Resource *resource, struct ::wl_resource *buffer, int32_t x, int32_t y)
 {
-    Q_UNUSED(resource)
+    if (x != 0 || y != 0) {
+        if (pending.offsetSource == SurfaceState::OffsetSource::Offset) {
+            wl_resource_post_error(resource->handle, error_invalid_offset,
+                                "cannot set offset using both wl_surface.offset() and wl_surface.attach()");
+            return;
+        }
+        pending.offset = QPoint(x, y);
+        pending.offsetSource = SurfaceState::OffsetSource::Attach;
+        pending.offsetIsSet = true;
+    } else {
+        // If the offset has been set using wl_surface.offset(), the offset passed to the attach
+        // request must be 0,0; otherwise an invalid_offset protocol error will be posted.
+        if (pending.offsetSource != SurfaceState::OffsetSource::Offset) {
+            pending.offset = QPoint(x, y);
+            pending.offsetSource = SurfaceState::OffsetSource::Attach;
+            pending.offsetIsSet = true;
+        }
+    }
+
     pending.bufferIsSet = true;
-    pending.offset = QPoint(x, y);
     if (!buffer) {
         // got a null buffer, deletes content in next frame
         pending.buffer = nullptr;
@@ -361,6 +378,20 @@ void SurfaceInterfacePrivate::surface_damage_buffer(Resource *resource, int32_t 
 {
     Q_UNUSED(resource)
     pending.bufferDamage |= QRect(x, y, width, height);
+}
+
+void SurfaceInterfacePrivate::surface_offset(Resource *resource, int32_t x, int32_t y)
+{
+    if (pending.offsetSource == SurfaceState::OffsetSource::Attach &&
+            (pending.offset.x() != 0 || pending.offset.y() != 0)) {
+        wl_resource_post_error(resource->handle, error_invalid_offset,
+                               "cannot set offset using both wl_surface.offset() and wl_surface.attach()");
+        return;
+    }
+
+    pending.offset = QPoint(x, y);
+    pending.offsetSource = SurfaceState::OffsetSource::Offset;
+    pending.offsetIsSet = true;
 }
 
 SurfaceInterface::SurfaceInterface(CompositorInterface *compositor, wl_resource *resource)
@@ -509,10 +540,13 @@ void SurfaceInterfacePrivate::swapStates(SurfaceState *source, SurfaceState *tar
             }
         }
         target->buffer = source->buffer;
-        target->offset = source->offset;
         target->damage = source->damage;
         target->bufferDamage = source->bufferDamage;
         target->bufferIsSet = source->bufferIsSet;
+    }
+    if (source->offsetIsSet) {
+        target->offset = source->offset;
+        target->offsetIsSet = true;
     }
     if (source->viewport.sourceGeometryIsSet) {
         target->viewport.sourceGeometry = source->viewport.sourceGeometry;
