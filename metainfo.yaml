@@ -12,5 +12,6 @@ release: true
 libraries:
    - cmake: "Plasma::KWaylandServer"
 cmakename: KWaylandServer
+group: plasma
 
 public_lib: true
