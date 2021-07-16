@@ -662,26 +662,51 @@ void SurfaceInterfacePrivate::swapStates(State *source, State *target, bool emit
     if (childrenChanged) {
         Q_EMIT q->childSubSurfacesChanged();
     }
+    // The position of a sub-surface is applied when its parent is committed.
+    const QList<SubSurfaceInterface *> children = current.children;
+    for (SubSurfaceInterface *subsurface : children) {
+        auto subsurfacePrivate = SubSurfaceInterfacePrivate::get(subsurface);
+        subsurfacePrivate->parentCommit();
+    }
+    if (role) {
+        role->commit();
+    }
+    Q_EMIT q->committed();
 }
 
 void SurfaceInterfacePrivate::commit()
 {
-    if (!subSurface) {
+    if (subSurface) {
+        commitSubSurface();
+    } else {
         swapStates(&pending, &current, true);
+    }
+}
 
-        // The position of a sub-surface is applied when its parent is committed.
-        const QList<SubSurfaceInterface *> children = current.children;
-        for (SubSurfaceInterface *subsurface : children) {
-            auto subsurfacePrivate = SubSurfaceInterfacePrivate::get(subsurface);
-            subsurfacePrivate->parentCommit();
+void SurfaceInterfacePrivate::commitSubSurface()
+{
+    if (subSurface->isSynchronized()) {
+        commitToCache();
+    } else {
+        if (hasCacheState) {
+            commitToCache();
+            commitFromCache();
+        } else {
+            swapStates(&pending, &current, true);
         }
     }
+}
 
-    if (role) {
-        role->commit();
-    }
+void SurfaceInterfacePrivate::commitToCache()
+{
+    swapStates(&pending, &cached, false);
+    hasCacheState = true;
+}
 
-    Q_EMIT q->committed();
+void SurfaceInterfacePrivate::commitFromCache()
+{
+    swapStates(&cached, &current, true);
+    hasCacheState = false;
 }
 
 QRegion SurfaceInterface::damage() const
