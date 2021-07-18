@@ -69,6 +69,8 @@ set(SERVER_LIB_SRCS
     xdgforeign_v2_interface.cpp
     xdgoutput_v1_interface.cpp
     xdgshell_interface.cpp
+    xdgdbusannotation_v1_interface_p.cpp
+    xdgdbusannotation_v1_interface.cpp
 )
 
 ecm_qt_declare_logging_category(SERVER_LIB_SRCS
@@ -284,6 +286,12 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     BASENAME drm-lease-v1
 )
 
+ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
+    PROTOCOL ${WaylandProtocols_DATADIR}/staging/xdg-dbus-annotation/xdg-dbus-annotation-v1.xml
+    BASENAME xdg-dbus-annotation-v1
+)
+
+
 add_library(KWaylandServer ${SERVER_LIB_SRCS})
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -395,6 +403,7 @@ set(SERVER_LIB_HEADERS
   utils.h
   viewporter_interface.h
   xdgactivation_v1_interface.h
+  xdgdbusannotation_v1_interface.h
   xdgdecoration_v1_interface.h
   xdgforeign_v2_interface.h
   xdgoutput_v1_interface.h

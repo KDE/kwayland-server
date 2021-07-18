@@ -274,6 +274,17 @@ add_test(NAME kwayland-testAppmenu COMMAND testAppmenu)
 ecm_mark_as_test(testAppmenu)
 
 ########################################################
+# Test annotation
+########################################################
+set( testAnnotation_SRCS
+        test_wayland_annotation.cpp
+    )
+add_executable(testAnnotation ${testAnnotation_SRCS})
+target_link_libraries( testAnnotation Qt::Test Qt::Gui KF5::WaylandClient Plasma::KWaylandServer)
+add_test(NAME kwayland-testAnnotation COMMAND testAnnotation)
+ecm_mark_as_test(testAnnotation)
+
+########################################################
 # Test Appmenu
 ########################################################
 set( testServerSideDecorationPalette_SRCS
