@@ -66,6 +66,8 @@ set(SERVER_LIB_SRCS
     xdgforeign_v2_interface.cpp
     xdgoutput_v1_interface.cpp
     xdgshell_interface.cpp
+    xdg_dbus_annotation_v1_interface_p.cpp
+    xdg_dbus_annotation_v1_interface.cpp
 )
 
 ecm_qt_declare_logging_category(SERVER_LIB_SRCS
@@ -276,6 +278,11 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     BASENAME xdg-activation-v1
 )
 
+ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
+    PROTOCOL ${WaylandProtocols_DATADIR}/staging/xdg-dbus-annotation/xdg-dbus-annotation-v1.xml
+    BASENAME xdg-dbus-annotation-v1
+)
+
 add_library(KWaylandServer ${SERVER_LIB_SRCS})
 add_library(Plasma::KWaylandServer ALIAS KWaylandServer)
 ecm_generate_export_header(KWaylandServer
@@ -376,6 +383,7 @@ set(SERVER_LIB_HEADERS
   utils.h
   viewporter_interface.h
   xdgactivation_v1_interface.h
+  xdg_dbus_annotation_v1_interface.h
   xdgdecoration_v1_interface.h
   xdgforeign_v2_interface.h
   xdgoutput_v1_interface.h
