@@ -30,10 +30,10 @@ public:
     void clearPendingChanges();
 
     bool hasPendingChanges(OutputDeviceInterface *outputdevice) const;
-    OutputChangeSet* pendingChanges(OutputDeviceInterface *outputdevice);
+    QSharedPointer<OutputChangeSet> pendingChanges(OutputDeviceInterface *outputdevice);
 
     OutputManagementInterface *outputManagement;
-    QHash<OutputDeviceInterface*, OutputChangeSet*> changes;
+    QHash<OutputDeviceInterface*, QSharedPointer<OutputChangeSet>> changes;
     OutputConfigurationInterface *q;
 
 protected:
@@ -230,7 +230,7 @@ OutputConfigurationInterfacePrivate::OutputConfigurationInterfacePrivate(OutputC
 {
 }
 
-QHash<OutputDeviceInterface*, OutputChangeSet*> OutputConfigurationInterface::changes() const
+QHash<OutputDeviceInterface*, QSharedPointer<OutputChangeSet>> OutputConfigurationInterface::changes() const
 {
     return d->changes;
 }
@@ -257,11 +257,11 @@ void OutputConfigurationInterfacePrivate::sendFailed()
     send_failed();
 }
 
-OutputChangeSet* OutputConfigurationInterfacePrivate::pendingChanges(OutputDeviceInterface *outputdevice)
+QSharedPointer<OutputChangeSet> OutputConfigurationInterfacePrivate::pendingChanges(OutputDeviceInterface *outputdevice)
 {
     auto &change = changes[outputdevice];
     if (!change) {
-        change = new OutputChangeSet(outputdevice, q);
+        change.reset(new OutputChangeSet(outputdevice));
     }
     return change;
 }
@@ -282,7 +282,6 @@ bool OutputConfigurationInterfacePrivate::hasPendingChanges(OutputDeviceInterfac
 
 void OutputConfigurationInterfacePrivate::clearPendingChanges()
 {
-    qDeleteAll(changes.begin(), changes.end());
     changes.clear();
 }
 
@@ -292,9 +291,6 @@ OutputConfigurationInterface::OutputConfigurationInterface(OutputManagementInter
 {
 }
 
-OutputConfigurationInterface::~OutputConfigurationInterface()
-{
-    d->clearPendingChanges();
-}
+OutputConfigurationInterface::~OutputConfigurationInterface() = default;
 
 }

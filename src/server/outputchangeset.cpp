@@ -10,8 +10,8 @@
 namespace KWaylandServer
 {
 
-OutputChangeSetPrivate::OutputChangeSetPrivate(OutputDeviceInterface *outputdevice, OutputChangeSet *parent)
-    : q(parent)
+OutputChangeSetPrivate::OutputChangeSetPrivate(OutputDeviceInterface *outputdevice, OutputChangeSet *q)
+    : q(q)
     , outputDevice(outputdevice)
     , enabled(outputDevice->enabled())
     , modeId(outputDevice->currentModeId())
@@ -23,9 +23,8 @@ OutputChangeSetPrivate::OutputChangeSetPrivate(OutputDeviceInterface *outputdevi
 {
 }
 
-OutputChangeSet::OutputChangeSet(OutputDeviceInterface *outputdevice, QObject *parent)
-    : QObject(parent)
-    , d(new OutputChangeSetPrivate(outputdevice, this))
+OutputChangeSet::OutputChangeSet(OutputDeviceInterface *outputdevice)
+    : d(new OutputChangeSetPrivate(outputdevice, this))
 {
 }
 

@@ -57,7 +57,7 @@ public:
      * @see OutputDeviceInterface
      * @see OutputManagement
      */
-    QHash<OutputDeviceInterface*, OutputChangeSet*> changes() const;
+    QHash<OutputDeviceInterface*, QSharedPointer<OutputChangeSet>> changes() const;
 
 public Q_SLOTS:
     /**

@@ -100,7 +100,7 @@ public:
 
 private:
     friend class OutputConfigurationInterfacePrivate;
-    explicit OutputChangeSet(OutputDeviceInterface *outputdevice, QObject *parent = nullptr);
+    explicit OutputChangeSet(OutputDeviceInterface *outputdevice);
 
     QScopedPointer<OutputChangeSetPrivate> d;
 };
