@@ -343,7 +343,8 @@ void SeatInterfacePrivate::endDrag(quint32 serial)
 void SeatInterfacePrivate::updateSelection(DataDeviceInterface *dataDevice)
 {
     // if the update is from the focussed window we should inform the active client
-    if (!(globalKeyboard.focus.surface && (*globalKeyboard.focus.surface->client() == dataDevice->client()))) {
+    if (!(globalKeyboard.focus.surface && (*globalKeyboard.focus.surface->client() == dataDevice->client())) &&
+        !(globalPointer.focus.surface && (*globalPointer.focus.surface->client() == dataDevice->client()))) {
         return;
     }
     q->setSelection(dataDevice->selection());
@@ -352,7 +353,8 @@ void SeatInterfacePrivate::updateSelection(DataDeviceInterface *dataDevice)
 void SeatInterfacePrivate::updatePrimarySelection(PrimarySelectionDeviceV1Interface *primarySelectionDevice)
 {
     // if the update is from the focussed window we should inform the active client
-    if (!(globalKeyboard.focus.surface && (*globalKeyboard.focus.surface->client() == primarySelectionDevice->client()))) {
+    if (!(globalKeyboard.focus.surface && (*globalKeyboard.focus.surface->client() == primarySelectionDevice->client())) &&
+        !(globalPointer.focus.surface && (*globalPointer.focus.surface->client() == primarySelectionDevice->client()))) {
         return;
     }
     q->setPrimarySelection(primarySelectionDevice->selection());
