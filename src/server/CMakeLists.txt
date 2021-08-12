@@ -21,6 +21,7 @@ set(SERVER_LIB_SRCS
     eglstream_controller_interface.cpp
     fakeinput_interface.cpp
     filtered_display.cpp
+    gpu_management_interface.cpp
     idle_interface.cpp
     idleinhibit_v1_interface.cpp
     inputmethod_v1_interface.cpp
@@ -277,6 +278,11 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     BASENAME xdg-activation-v1
 )
 
+ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
+    PROTOCOL ${PLASMA_WAYLAND_PROTOCOLS_DIR}/gpu-management.xml
+    BASENAME org-kde-kwin-gpu-management
+)
+
 add_library(KWaylandServer ${SERVER_LIB_SRCS})
 add_library(Plasma::KWaylandServer ALIAS KWaylandServer)
 ecm_generate_export_header(KWaylandServer
@@ -340,6 +346,7 @@ set(SERVER_LIB_HEADERS
   eglstream_controller_interface.h
   fakeinput_interface.h
   filtered_display.h
+  gpu_management_interface.h
   idle_interface.h
   idleinhibit_v1_interface.h
   inputmethod_v1_interface.h
