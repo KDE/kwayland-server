@@ -33,6 +33,8 @@ include(ECMAddQch)
 include(KDEInstallDirs)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 include(KDECMakeSettings)
+include(KDEClangFormat)
+include(KDEGitCommitHooks)
 
 option(BUILD_QCH "Build API documentation in QCH format (for e.g. Qt Assistant, Qt Creator & KDevelop)" OFF)
 add_feature_info(QCH ${BUILD_QCH} "API documentation in QCH format (for e.g. Qt Assistant, Qt Creator & KDevelop)")
@@ -111,5 +113,10 @@ install(EXPORT KWaylandServerTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FI
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kwaylandserver_version.h
         DESTINATION ${KDE_INSTALL_INCLUDEDIR} COMPONENT Devel )
+
+# add clang-format target for all our real source files
+file(GLOB_RECURSE ALL_CLANG_FORMAT_SOURCE_FILES *.cpp *.h)
+kde_clang_format(${ALL_CLANG_FORMAT_SOURCE_FILES})
+kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
