@@ -1,0 +1,9 @@
+Dependencies:
+- 'on': ['Linux', 'FreeBSD']
+  'require':
+    'frameworks/extra-cmake-modules': '@stable'
+    'frameworks/kwayland': '@stable'
+    'libraries/plasma-wayland-protocols': '@stable'
+
+Options:
+  test-before-installing: True
