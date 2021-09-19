@@ -60,7 +60,7 @@ public:
     static PointerInterface *get(wl_resource *native);
 
     void sendButton(quint32 button, PointerButtonState state, quint32 serial);
-    void sendAxis(Qt::Orientation orientation, qreal delta, qint32 discreteDelta, PointerAxisSource source);
+    void sendAxis(Qt::Orientation orientation, qreal delta, qint32 deltaV120, PointerAxisSource source);
     void sendMotion(const QPointF &position);
     void sendFrame();
 

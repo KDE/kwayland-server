@@ -41,6 +41,7 @@ public:
     QScopedPointer<PointerSwipeGestureV1Interface> swipeGesturesV1;
     QScopedPointer<PointerPinchGestureV1Interface> pinchGesturesV1;
     QPointF lastPosition;
+    QPoint accumulatorV120;
 
     void sendLeave(quint32 serial);
     void sendEnter(const QPointF &parentSurfacePosition, quint32 serial);
