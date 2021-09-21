@@ -40,7 +40,7 @@
 
 namespace KWaylandServer
 {
-static const int s_version = 7;
+static const int s_version = 8;
 
 SeatInterfacePrivate *SeatInterfacePrivate::get(SeatInterface *seat)
 {

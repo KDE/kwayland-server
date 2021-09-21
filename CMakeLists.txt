@@ -8,7 +8,7 @@ set(PROJECT_VERSION_MAJOR 5)
 set(QT_MIN_VERSION "5.15.0")
 set(KF5_MIN_VERSION "5.82")
 set(KDE_COMPILERSETTINGS_LEVEL "5.82")
-set(WAYLAND_MIN_VERSION "1.18")
+set(WAYLAND_MIN_VERSION "1.18") # TODO: Bump when wayland is released with axis_v120 changes.
 
 project(KWaylandServer VERSION ${PROJECT_VERSION})
 

@@ -253,7 +253,11 @@ void PointerInterface::sendAxis(Qt::Orientation orientation, qreal delta, qint32
         }
 
         if (delta != 0.0) {
-            if (version >= WL_POINTER_AXIS_DISCRETE_SINCE_VERSION) {
+            if (version >= WL_POINTER_AXIS_VALUE120_SINCE_VERSION) {
+                if (deltaV120) {
+                    d->send_axis_value120(resource->handle, wlOrientation, deltaV120);
+                }
+            } else if (version >= WL_POINTER_AXIS_DISCRETE_SINCE_VERSION) {
                 if (deltaDiscrete) {
                     d->send_axis_discrete(resource->handle, wlOrientation, deltaDiscrete);
                 }
