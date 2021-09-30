@@ -12,6 +12,32 @@ namespace KWaylandServer
 {
 static const quint32 s_version = 1;
 
+struct Modifier {
+    const QByteArray identifier;
+    const Qt::KeyboardModifier modifier;
+};
+using Modifiers = QVector<Modifier>;
+Q_GLOBAL_STATIC_WITH_ARGS(Modifiers,
+                          s_modifiers,
+                          ({
+                              Modifier{"Shift", Qt::ShiftModifier},
+                              Modifier{"Control", Qt::ControlModifier},
+                              Modifier{"Alt", Qt::AltModifier},
+                              Modifier{"Mod4", Qt::MetaModifier},
+                          }));
+uint32_t qtModifiersToWayland(Qt::KeyboardModifiers mods)
+{
+    uint32_t ret = 0;
+    int i = 0;
+    for (const Modifier &modifier : *s_modifiers) {
+        if (modifier.modifier & mods) {
+            ++i;
+            ret |= 1 << i;
+        }
+    }
+    return ret;
+}
+
 // helpers
 static TextInputContentHints convertContentHint(uint32_t hint)
 {
@@ -191,27 +217,25 @@ void TextInputV2InterfacePrivate::commitString(const QString &text)
     }
 }
 
-void TextInputV2InterfacePrivate::keysymPressed(quint32 keysym, Qt::KeyboardModifiers modifiers)
+void TextInputV2InterfacePrivate::keysymPressed(quint32 keysym, uint32_t modifiers)
 {
     if (!surface) {
         return;
     }
-    Q_UNUSED(modifiers)
     const QList<Resource *> textInputs = textInputsForClient(surface->client());
     for (auto resource : textInputs) {
-        send_keysym(resource->handle, seat ? seat->timestamp() : 0, keysym, WL_KEYBOARD_KEY_STATE_PRESSED, 0);
+        send_keysym(resource->handle, seat ? seat->timestamp() : 0, keysym, WL_KEYBOARD_KEY_STATE_PRESSED, modifiers);
     }
 }
 
-void TextInputV2InterfacePrivate::keysymReleased(quint32 keysym, Qt::KeyboardModifiers modifiers)
+void TextInputV2InterfacePrivate::keysymReleased(quint32 keysym, uint32_t modifiers)
 {
     if (!surface) {
         return;
     }
-    Q_UNUSED(modifiers)
     const QList<Resource *> textInputs = textInputsForClient(surface->client());
     for (auto resource : textInputs) {
-        send_keysym(resource->handle, seat ? seat->timestamp() : 0, keysym, WL_KEYBOARD_KEY_STATE_RELEASED, 0);
+        send_keysym(resource->handle, seat ? seat->timestamp() : 0, keysym, WL_KEYBOARD_KEY_STATE_RELEASED, modifiers);
     }
 }
 
@@ -305,6 +329,18 @@ TextInputV2InterfacePrivate::TextInputV2InterfacePrivate(SeatInterface *seat, Te
     : seat(seat)
     , q(_q)
 {
+}
+
+void TextInputV2InterfacePrivate::zwp_text_input_v2_bind_resource(Resource *resource)
+{
+    static QByteArray mods;
+    if (mods.isEmpty()) {
+        for (const Modifier &modifier : *s_modifiers) {
+            mods += modifier.identifier;
+            mods += '\0';
+        }
+    }
+    send_modifiers_map(resource->handle, mods);
 }
 
 void TextInputV2InterfacePrivate::zwp_text_input_v2_enable(Resource *resource, wl_resource *s)
@@ -441,12 +477,12 @@ void TextInputV2Interface::commitString(const QString &text)
 void TextInputV2Interface::keysymPressed(quint32 keysym, Qt::KeyboardModifiers modifiers)
 {
     Q_UNUSED(modifiers)
-    d->keysymPressed(keysym, modifiers);
+    d->keysymPressed(keysym, qtModifiersToWayland(modifiers));
 }
 
 void TextInputV2Interface::keysymReleased(quint32 keysym, Qt::KeyboardModifiers modifiers)
 {
-    d->keysymReleased(keysym, modifiers);
+    d->keysymReleased(keysym, qtModifiersToWayland(modifiers));
 }
 
 void TextInputV2Interface::deleteSurroundingText(quint32 beforeLength, quint32 afterLength)

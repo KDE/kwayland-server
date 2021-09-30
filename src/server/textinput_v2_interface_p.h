@@ -42,8 +42,8 @@ public:
     void setTextDirection(Qt::LayoutDirection direction);
     void setPreEditCursor(qint32 index);
     void setCursorPosition(qint32 index, qint32 anchor);
-    void keysymPressed(quint32 keysym, Qt::KeyboardModifiers modifiers);
-    void keysymReleased(quint32 keysym, Qt::KeyboardModifiers modifiers);
+    void keysymPressed(quint32 keysym, uint32_t modifiers);
+    void keysymReleased(quint32 keysym, uint32_t modifiers);
     void sendInputPanelState();
     void sendLanguage();
 
@@ -69,6 +69,7 @@ public:
     QSet<SurfaceInterface *> m_enabledSurfaces;
 
 protected:
+    void zwp_text_input_v2_bind_resource(Resource *resource) override;
     void zwp_text_input_v2_enable(Resource *resource, wl_resource *surface) override;
     void zwp_text_input_v2_disable(Resource *resource, wl_resource *surface) override;
     void zwp_text_input_v2_show_input_panel(Resource *resource) override;
