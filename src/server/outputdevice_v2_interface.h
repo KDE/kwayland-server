@@ -146,6 +146,7 @@ public:
     void setVrrPolicy(VrrPolicy policy);
     void setRgbRange(RgbRange rgbRange);
 
+    wl_resource *resource() const;
     static OutputDeviceV2Interface *get(wl_resource *native);
 
 Q_SIGNALS:

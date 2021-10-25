@@ -14,6 +14,8 @@ namespace KWaylandServer
 
 class OutputManagementV2InterfacePrivate;
 class OutputConfigurationV2Interface;
+class OutputDeviceV2Interface;
+
 /**
  * @class OutputManagementInterface
  *
@@ -34,6 +36,13 @@ class KWAYLANDSERVER_EXPORT OutputManagementV2Interface : public QObject
 public:
     explicit OutputManagementV2Interface(Display *display, QObject *parent = nullptr);
     ~OutputManagementV2Interface() override;
+
+    /**
+     * Sets a primary @p output for the current display configuration
+     *
+     * It's up to the compositor to decide what the semantics are for it.
+     */
+    void setPrimaryOutput(OutputDeviceV2Interface *output);
 
 Q_SIGNALS:
     /**

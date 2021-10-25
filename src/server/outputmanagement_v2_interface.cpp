@@ -15,15 +15,21 @@
 
 namespace KWaylandServer
 {
-
-static const quint32 s_version = 1;
+static const quint32 s_version = 2;
 
 class OutputManagementV2InterfacePrivate : public QtWaylandServer::kde_output_management_v2
 {
 public:
     OutputManagementV2InterfacePrivate(OutputManagementV2Interface *_q, Display *display);
 
-private:
+    void kde_output_management_v2_bind_resource(Resource *resource) override
+    {
+        if (m_output) {
+            send_primary_output_change(resource->handle, m_output->uuid().toString(QUuid::WithoutBraces));
+        }
+    }
+
+    OutputDeviceV2Interface *m_output = nullptr;
     OutputManagementV2Interface *q;
 
 protected:
@@ -54,4 +60,19 @@ OutputManagementV2Interface::OutputManagementV2Interface(Display *display, QObje
 
 OutputManagementV2Interface::~OutputManagementV2Interface() = default;
 
+void OutputManagementV2Interface::setPrimaryOutput(OutputDeviceV2Interface *output)
+{
+    Q_ASSERT(output->enabled());
+
+    if (output == d->m_output) {
+        return;
+    }
+    d->m_output = output;
+
+    const auto uuid = output->uuid().toString(QUuid::WithoutBraces);
+    const auto resources = d->resourceMap();
+    for (auto *resource : resources) {
+        d->send_primary_output_change(resource->handle, uuid);
+    }
+}
 }

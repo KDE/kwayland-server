@@ -19,7 +19,6 @@
 
 namespace KWaylandServer
 {
-
 static const quint32 s_version = 1;
 
 class OutputDeviceV2InterfacePrivate : public QtWaylandServer::kde_output_device_v2
@@ -745,6 +744,11 @@ void OutputDeviceV2InterfacePrivate::updateRgbRange()
         sendRgbRange(resource);
         sendDone(resource);
     }
+}
+
+wl_resource *OutputDeviceV2Interface::resource() const
+{
+    return d->resource()->handle;
 }
 
 OutputDeviceV2Interface *OutputDeviceV2Interface::get(wl_resource *native)
