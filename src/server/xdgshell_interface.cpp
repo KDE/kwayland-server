@@ -318,6 +318,9 @@ void XdgToplevelInterfacePrivate::commit()
 
     bool isResettable = xdgSurfacePrivate->isConfigured && xdgSurfacePrivate->isMapped;
 
+    if (xdgSurfacePrivate->isConfigured) {
+        xdgSurfacePrivate->commit();
+    }
 
     if (isResettable && !xdgSurfacePrivate->isMapped) {
         reset();
@@ -332,9 +335,8 @@ void XdgToplevelInterfacePrivate::commit()
         current.maximumSize = next.maximumSize;
         Q_EMIT q->maximumSizeChanged(current.maximumSize);
     }
-    if (xdgSurfacePrivate->isConfigured) {
-        xdgSurfacePrivate->commit();
-    } else {
+
+    if (!xdgSurfacePrivate->isConfigured) {
         Q_EMIT q->initializeRequested();
     }
 }
