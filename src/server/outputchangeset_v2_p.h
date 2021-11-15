@@ -27,6 +27,7 @@ public:
     uint32_t overscan;
     OutputDeviceV2Interface::VrrPolicy vrrPolicy = OutputDeviceV2Interface::VrrPolicy::Automatic;
     OutputDeviceV2Interface::RgbRange rgbRange = OutputDeviceV2Interface::RgbRange::Automatic;
+    uint32_t bpc = 8;
 };
 
 }

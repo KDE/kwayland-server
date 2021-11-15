@@ -19,7 +19,7 @@
 
 namespace KWaylandServer
 {
-static const quint32 s_version = 2;
+static const quint32 s_version = 3;
 
 class OutputDeviceV2InterfacePrivate : public QtWaylandServer::kde_output_device_v2
 {
@@ -44,6 +44,8 @@ public:
     void sendOverscan(Resource *resource);
     void sendVrrPolicy(Resource *resource);
     void sendRgbRange(Resource *resource);
+    void sendBpcRange(Resource *resource);
+    void sendBpc(Resource *resource);
 
     QSize physicalSize;
     QPoint globalPosition;
@@ -66,6 +68,10 @@ public:
     uint32_t overscan = 0;
     OutputDeviceV2Interface::VrrPolicy vrrPolicy = OutputDeviceV2Interface::VrrPolicy::Automatic;
     OutputDeviceV2Interface::RgbRange rgbRange = OutputDeviceV2Interface::RgbRange::Automatic;
+
+    uint32_t minBpc = 8;
+    uint32_t maxBpc = 8;
+    uint32_t bpc = 8;
 
     QPointer<Display> display;
     OutputDeviceV2Interface *q;
@@ -681,6 +687,60 @@ void OutputDeviceV2Interface::setRgbRange(RgbRange rgbRange)
 void OutputDeviceV2InterfacePrivate::sendRgbRange(Resource *resource)
 {
     send_rgb_range(resource->handle, static_cast<uint32_t>(rgbRange));
+}
+
+uint32_t OutputDeviceV2Interface::minBpc() const
+{
+    return d->minBpc;
+}
+
+uint32_t OutputDeviceV2Interface::maxBpc() const
+{
+    return d->maxBpc;
+}
+
+uint32_t OutputDeviceV2Interface::bpc() const
+{
+    return d->bpc;
+}
+
+void OutputDeviceV2Interface::setBpcRange(uint32_t min, uint32_t max)
+{
+    if (d->minBpc != min || d->maxBpc != max) {
+        d->minBpc = min;
+        d->maxBpc = max;
+        const auto clientResources = d->resourceMap();
+        for (const auto &resource : clientResources) {
+            d->sendBpcRange(resource);
+            d->sendDone(resource);
+        }
+    }
+}
+
+void OutputDeviceV2Interface::setBpc(uint32_t bpc)
+{
+    if (d->bpc != bpc) {
+        d->bpc = bpc;
+        const auto clientResources = d->resourceMap();
+        for (const auto &resource : clientResources) {
+            d->sendBpc(resource);
+            d->sendDone(resource);
+        }
+    }
+}
+
+void OutputDeviceV2InterfacePrivate::sendBpcRange(Resource *resource)
+{
+    if (resource->version() >= KDE_OUTPUT_DEVICE_V2_SUPPORTED_BITS_PER_COLOR_SINCE_VERSION) {
+        kde_output_device_v2_send_supported_bits_per_color(resource->handle, minBpc, maxBpc);
+    }
+}
+
+void OutputDeviceV2InterfacePrivate::sendBpc(Resource *resource)
+{
+    if (resource->version() >= KDE_OUTPUT_DEVICE_V2_USED_BITS_PER_COLOR_SINCE_VERSION) {
+        kde_output_device_v2_send_used_bits_per_color(resource->handle, bpc);
+    }
 }
 
 wl_resource *OutputDeviceV2Interface::resource() const

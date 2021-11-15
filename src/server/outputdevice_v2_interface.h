@@ -60,6 +60,7 @@ public:
         Overscan = 0x1,
         Vrr = 0x2,
         RgbRange = 0x4,
+        Bpc = 0x8,
     };
     Q_ENUM(Capability)
     Q_DECLARE_FLAGS(Capabilities, Capability)
@@ -104,6 +105,10 @@ public:
     VrrPolicy vrrPolicy() const;
     RgbRange rgbRange() const;
 
+    uint32_t minBpc() const;
+    uint32_t maxBpc() const;
+    uint32_t bpc() const;
+
     void setPhysicalSize(const QSize &size);
     void setGlobalPosition(const QPoint &pos);
     void setManufacturer(const QString &manufacturer);
@@ -133,6 +138,9 @@ public:
     void setOverscan(uint32_t overscan);
     void setVrrPolicy(VrrPolicy policy);
     void setRgbRange(RgbRange rgbRange);
+
+    void setBpcRange(uint32_t min, uint32_t max);
+    void setBpc(uint32_t bpc);
 
     wl_resource *resource() const;
     static OutputDeviceV2Interface *get(wl_resource *native);

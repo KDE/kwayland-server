@@ -48,6 +48,7 @@ protected:
     void kde_output_configuration_v2_set_vrr_policy(Resource *resource, struct ::wl_resource *outputdevice, uint32_t policy) override;
     void kde_output_configuration_v2_set_rgb_range(Resource *resource, wl_resource *outputdevice, uint32_t rgbRange) override;
     void kde_output_configuration_v2_set_primary_output(Resource *resource, struct ::wl_resource *output) override;
+    void kde_output_configuration_v2_set_bits_per_color(Resource *resource, wl_resource *output, uint32_t bitrate) override;
 };
 
 void OutputConfigurationV2InterfacePrivate::kde_output_configuration_v2_enable(Resource *resource, wl_resource *outputdevice, int32_t enable)
@@ -156,6 +157,17 @@ void OutputConfigurationV2InterfacePrivate::kde_output_configuration_v2_set_rgb_
     }
     OutputDeviceV2Interface *output = OutputDeviceV2Interface::get(outputdevice);
     pendingChanges(output)->d->rgbRange = static_cast<OutputDeviceV2Interface::RgbRange>(rgbRange);
+}
+
+void OutputConfigurationV2InterfacePrivate::kde_output_configuration_v2_set_bits_per_color(Resource *resource, wl_resource *outputdevice, uint32_t bitsPerColor)
+{
+    Q_UNUSED(resource)
+    OutputDeviceV2Interface *output = OutputDeviceV2Interface::get(outputdevice);
+    if (bitsPerColor < output->minBpc() || bitsPerColor > output->maxBpc()) {
+        qCWarning(KWAYLAND_SERVER, "Invalid bitsPerColor %u (min %u, max %u) requested", bitsPerColor, output->minBpc(), output->maxBpc());
+        return;
+    }
+    pendingChanges(output)->d->bpc = bitsPerColor;
 }
 
 void OutputConfigurationV2InterfacePrivate::kde_output_configuration_v2_set_primary_output(Resource *resource, struct ::wl_resource *output)

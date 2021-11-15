@@ -10,7 +10,6 @@
 
 namespace KWaylandServer
 {
-
 OutputChangeSetV2Private::OutputChangeSetV2Private(OutputDeviceV2Interface *outputdevice, OutputChangeSetV2 *parent)
     : q(parent)
     , outputDevice(outputdevice)
@@ -21,6 +20,7 @@ OutputChangeSetV2Private::OutputChangeSetV2Private(OutputDeviceV2Interface *outp
     , position(outputDevice->globalPosition())
     , scale(outputDevice->scale())
     , overscan(outputDevice->overscan())
+    , bpc(outputDevice->bpc())
 {
 }
 
@@ -119,5 +119,15 @@ bool OutputChangeSetV2::rgbRangeChanged() const
 OutputDeviceV2Interface::RgbRange OutputChangeSetV2::rgbRange() const
 {
     return d->rgbRange;
+}
+
+bool OutputChangeSetV2::bpcChanged() const
+{
+    return d->bpc != d->outputDevice->bpc();
+}
+
+uint32_t OutputChangeSetV2::bpc() const
+{
+    return d->bpc;
 }
 }
