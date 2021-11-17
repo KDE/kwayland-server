@@ -28,7 +28,6 @@ public:
     void emitConfigurationChangeRequested() const;
     void clearPendingChanges();
 
-    bool hasPendingChanges(OutputDeviceV2Interface *outputdevice) const;
     OutputChangeSetV2 *pendingChanges(OutputDeviceV2Interface *outputdevice);
 
     OutputManagementV2Interface *outputManagement;
@@ -233,21 +232,6 @@ OutputChangeSetV2 *OutputConfigurationV2InterfacePrivate::pendingChanges(OutputD
         change = new OutputChangeSetV2(outputdevice, q);
     }
     return change;
-}
-
-bool OutputConfigurationV2InterfacePrivate::hasPendingChanges(OutputDeviceV2Interface *outputdevice) const
-{
-    auto it = changes.constFind(outputdevice);
-    if (it == changes.constEnd()) {
-        return false;
-    }
-    auto c = *it;
-    return c->enabledChanged() ||
-    c->sizeChanged() ||
-    c->refreshRateChanged() ||
-    c->transformChanged() ||
-    c->positionChanged() ||
-    c->scaleChanged();
 }
 
 void OutputConfigurationV2InterfacePrivate::clearPendingChanges()
