@@ -101,7 +101,10 @@ public:
 
 Q_SIGNALS:
     void aboutToBeDestroyed();
-    void dragStarted(AbstractDataSource *source, SurfaceInterface *originSurface, quint32 serial, DragAndDropIcon *dragIcon);
+    void dragStarted(KWaylandServer::AbstractDataSource *source,
+                     KWaylandServer::SurfaceInterface *originSurface,
+                     quint32 serial,
+                     KWaylandServer::DragAndDropIcon *dragIcon);
     void selectionChanged(KWaylandServer::DataSourceInterface *);
     void selectionCleared();
 
