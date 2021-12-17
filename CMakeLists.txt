@@ -64,8 +64,6 @@ set_package_properties(WaylandProtocols PROPERTIES TYPE REQUIRED)
 find_package(EGL)
 set_package_properties(EGL PROPERTIES TYPE REQUIRED)
 
-check_include_file("linux/input.h" HAVE_LINUX_INPUT_H)
-configure_file(config-kwaylandserver.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-kwaylandserver.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # adjusting CMAKE_C_FLAGS to get wayland protocols to compile
