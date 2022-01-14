@@ -354,7 +354,7 @@ void TestWaylandSurface::testFrameCallback()
     s->damage(QRect(0, 0, 10, 10));
     s->commit();
     QVERIFY(damageSpy.wait());
-    serverSurface->frameRendered(10);
+    serverSurface->frameRendered(std::chrono::milliseconds(10));
     QVERIFY(frameRenderedSpy.isEmpty());
     QVERIFY(frameRenderedSpy.wait());
     QVERIFY(!frameRenderedSpy.isEmpty());
@@ -474,7 +474,7 @@ void TestWaylandSurface::testAttachBuffer()
     buffer3->unref();
     QVERIFY(buffer3->isReferenced());
 
-    serverSurface->frameRendered(1);
+    serverSurface->frameRendered(std::chrono::milliseconds(1));
     QVERIFY(frameRenderedSpy.wait());
 
     // commit a different value shouldn't change our buffer

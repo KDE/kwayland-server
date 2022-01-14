@@ -360,7 +360,7 @@ CompositorInterface *SurfaceInterface::compositor() const
     return d->compositor;
 }
 
-void SurfaceInterface::frameRendered(quint32 msec)
+void SurfaceInterface::frameRendered(std::chrono::milliseconds timestamp)
 {
     // notify all callbacks
     wl_resource *resource;
@@ -368,15 +368,15 @@ void SurfaceInterface::frameRendered(quint32 msec)
 
     wl_resource_for_each_safe(resource, tmp, &d->current.frameCallbacks)
     {
-        wl_callback_send_done(resource, msec);
+        wl_callback_send_done(resource, timestamp.count());
         wl_resource_destroy(resource);
     }
 
     for (SubSurfaceInterface *subsurface : qAsConst(d->current.below)) {
-        subsurface->surface()->frameRendered(msec);
+        subsurface->surface()->frameRendered(timestamp);
     }
     for (SubSurfaceInterface *subsurface : qAsConst(d->current.above)) {
-        subsurface->surface()->frameRendered(msec);
+        subsurface->surface()->frameRendered(timestamp);
     }
 }
 

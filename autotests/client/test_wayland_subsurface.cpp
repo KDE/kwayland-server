@@ -601,7 +601,7 @@ void TestSubSurface::testSyncMode()
     // sending frame rendered to parent should also send it to child
     QSignalSpy frameRenderedSpy(surface.data(), &Surface::frameRendered);
     QVERIFY(frameRenderedSpy.isValid());
-    parentSurface->frameRendered(100);
+    parentSurface->frameRendered(std::chrono::milliseconds(100));
     QVERIFY(frameRenderedSpy.wait());
 }
 

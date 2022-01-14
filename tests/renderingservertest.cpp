@@ -152,7 +152,7 @@ void CompositorWindow::paintEvent(QPaintEvent *event)
         if (clientBuffer) {
             p.drawImage(QPoint(0, 0), clientBuffer->data());
         }
-        surface->frameRendered(QDateTime::currentMSecsSinceEpoch());
+        surface->frameRendered(std::chrono::milliseconds(QDateTime::currentMSecsSinceEpoch()));
     }
 }
 

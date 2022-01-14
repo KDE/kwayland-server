@@ -157,7 +157,7 @@ public:
      */
     QPointF mapToChild(SurfaceInterface *child, const QPointF &point) const;
 
-    void frameRendered(quint32 msec);
+    void frameRendered(std::chrono::milliseconds timestamp);
     bool hasFrameCallbacks() const;
 
     QRegion damage() const;
