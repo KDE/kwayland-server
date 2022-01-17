@@ -223,7 +223,7 @@ Scanner::WaylandEvent Scanner::readEvent(QXmlStreamReader &xml, bool request)
         .arguments = {},
     };
     while (xml.readNextStartElement()) {
-        if (xml.name() == "arg") {
+        if (xml.name() == QStringLiteral("arg")) {
             WaylandArgument argument = {
                 .name      = byteArrayValue(xml, "name"),
                 .type      = byteArrayValue(xml, "type"),
@@ -247,7 +247,7 @@ Scanner::WaylandEnum Scanner::readEnum(QXmlStreamReader &xml)
     };
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == "entry") {
+        if (xml.name() == QStringLiteral("entry")) {
             WaylandEnumEntry entry = {
                 .name    = byteArrayValue(xml, "name"),
                 .value   = byteArrayValue(xml, "value"),
@@ -273,11 +273,11 @@ Scanner::WaylandInterface Scanner::readInterface(QXmlStreamReader &xml)
     };
 
     while (xml.readNextStartElement()) {
-        if (xml.name() == "event")
+        if (xml.name() == QStringLiteral("event"))
             interface.events.push_back(readEvent(xml, false));
-        else if (xml.name() == "request")
+        else if (xml.name() == QStringLiteral("request"))
             interface.requests.push_back(readEvent(xml, true));
-        else if (xml.name() == "enum")
+        else if (xml.name() == QStringLiteral("enum"))
             interface.enums.push_back(readEnum(xml));
         else
             xml.skipCurrentElement();
@@ -438,7 +438,7 @@ bool Scanner::process()
     if (!m_xml->readNextStartElement())
         return false;
 
-    if (m_xml->name() != "protocol") {
+    if (m_xml->name() != QStringLiteral("protocol")) {
         m_xml->raiseError(QStringLiteral("The file is not a wayland protocol file."));
         return false;
     }
@@ -458,7 +458,7 @@ bool Scanner::process()
     std::vector<WaylandInterface> interfaces;
 
     while (m_xml->readNextStartElement()) {
-        if (m_xml->name() == "interface")
+        if (m_xml->name() == QStringLiteral("interface"))
             interfaces.push_back(readInterface(*m_xml));
         else
             m_xml->skipCurrentElement();

@@ -32,7 +32,7 @@ if(BUILD_QCH)
             ${KWaylandServer_APIDOX_SRCS}
         MD_MAINPAGE "${CMAKE_SOURCE_DIR}/README.md"
         LINK_QCHS
-            Qt5Gui_QCH
+            Qt${QT_MAJOR_VERSION}Gui_QCH
             KF5Wayland_QCH
         INCLUDE_DIRS
             ${KWaylandServer_APIDOX_BUILD_INCLUDE_DIRS}

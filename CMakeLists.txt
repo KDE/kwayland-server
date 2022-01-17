@@ -45,11 +45,17 @@ ecm_setup_version(PROJECT VARIABLE_PREFIX KWAYLANDSERVER
                         SOVERSION 5)
 
 # Dependencies
-find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED Concurrent Gui WaylandClient)
+find_package(Qt${QT_MAJOR_VERSION} ${QT_MIN_VERSION} CONFIG REQUIRED Concurrent Gui WaylandClient)
 find_package(KF5Wayland ${KF5_MIN_VERSION} CONFIG REQUIRED)
 find_package(PlasmaWaylandProtocols CONFIG REQUIRED)
 
-find_package(QtWaylandScanner REQUIRED)
+# With Qt6 use qt_generate_wayland_protocol_{client,server}_sources instead of
+# ecm_add_qtwayland_{client,server}_protocol (from ECM's QtWaylandScanner)
+if (QT_MAJOR_VERSION STREQUAL "6")
+    find_package(Qt6WaylandCompositor CONFIG REQUIRED)
+else()
+    find_package(QtWaylandScanner REQUIRED)
+endif()
 
 find_package(Wayland ${WAYLAND_MIN_VERSION} COMPONENTS Client Server)
 set_package_properties(Wayland PROPERTIES
