@@ -89,6 +89,7 @@ public:
      */
     bool start();
     void dispatchEvents();
+    void stop();
 
     /**
      * Create a client for the given file descriptor.

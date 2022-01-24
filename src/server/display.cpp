@@ -49,6 +49,13 @@ Display::~Display()
     wl_display_destroy(d->display);
 }
 
+void Display::stop()
+{
+    d->socketNotifier->setEnabled(false);
+    wl_display_destroy_clients(d->display);
+    d->running = false;
+}
+
 bool Display::addSocketFileDescriptor(int fileDescriptor, const QString &name)
 {
     if (wl_display_add_socket_fd(d->display, fileDescriptor)) {
