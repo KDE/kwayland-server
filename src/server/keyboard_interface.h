@@ -11,6 +11,7 @@
 
 namespace KWaylandServer
 {
+class ClientConnection;
 class SeatInterface;
 class SurfaceInterface;
 class KeyboardInterfacePrivate;
@@ -55,6 +56,10 @@ public:
 
     void sendKey(quint32 key, KeyboardKeyState state);
     void sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group);
+
+    bool containsAdditionalClient(ClientConnection *client) const;
+    void addAdditionalClient(ClientConnection *client);
+    void removeAdditionalClient(ClientConnection *client);
 
 private:
     void setFocusedSurface(SurfaceInterface *surface, quint32 serial);

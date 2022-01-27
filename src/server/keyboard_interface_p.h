@@ -25,6 +25,7 @@ public:
     void sendModifiers();
     void sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group, quint32 serial);
 
+    QList<Resource *> keyboards() const;
     QList<Resource *> keyboardsForClient(ClientConnection *client) const;
     void sendLeave(SurfaceInterface *surface, quint32 serial);
     void sendEnter(SurfaceInterface *surface, quint32 serial);
@@ -56,6 +57,7 @@ public:
     QHash<quint32, KeyboardKeyState> states;
     bool updateKey(quint32 key, KeyboardKeyState state);
     QVector<quint32> pressedKeys() const;
+    QList<ClientConnection *> extraClients;
 
 protected:
     void keyboard_release(Resource *resource) override;

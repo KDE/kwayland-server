@@ -48,6 +48,24 @@ void KeyboardInterfacePrivate::keyboard_bind_resource(Resource *resource)
     }
 }
 
+QList<KeyboardInterfacePrivate::Resource *> KeyboardInterfacePrivate::keyboards() const
+{
+    QList<KeyboardInterfacePrivate::Resource *> ret;
+    if (focusedSurface) {
+        ret = resourceMap().values(focusedSurface->client()->client());
+    }
+
+    for (auto extraClient : qAsConst(extraClients)) {
+        const auto keyboards = resourceMap().values(extraClient->client());
+        for (auto keyboard : keyboards) {
+            if (!ret.contains(keyboard)) {
+                ret << keyboard;
+            }
+        }
+    }
+    return ret;
+}
+
 QList<KeyboardInterfacePrivate::Resource *> KeyboardInterfacePrivate::keyboardsForClient(ClientConnection *client) const
 {
     return resourceMap().values(client->client());
@@ -114,8 +132,8 @@ void KeyboardInterface::setKeymap(const QByteArray &content)
 
 void KeyboardInterfacePrivate::sendModifiers(quint32 depressed, quint32 latched, quint32 locked, quint32 group, quint32 serial)
 {
-    const QList<Resource *> keyboards = keyboardsForClient(focusedSurface->client());
-    for (Resource *keyboardResource : keyboards) {
+    const QList<Resource *> keyboardResources = keyboards();
+    for (Resource *keyboardResource : keyboardResources) {
         send_modifiers(keyboardResource->handle, serial, depressed, latched, locked, group);
     }
 }
@@ -187,13 +205,13 @@ void KeyboardInterface::sendKey(quint32 key, KeyboardKeyState state)
         return;
     }
 
-    if (!d->focusedSurface) {
+    const QList<KeyboardInterfacePrivate::Resource *> keyboardResources = d->keyboards();
+    if (keyboardResources.isEmpty()) {
         return;
     }
 
-    const QList<KeyboardInterfacePrivate::Resource *> keyboards = d->keyboardsForClient(d->focusedSurface->client());
     const quint32 serial = d->seat->display()->nextSerial();
-    for (KeyboardInterfacePrivate::Resource *keyboardResource : keyboards) {
+    for (KeyboardInterfacePrivate::Resource *keyboardResource : keyboardResources) {
         d->send_key(keyboardResource->handle, serial, d->seat->timestamp(), key, quint32(state));
     }
 }
@@ -249,4 +267,20 @@ qint32 KeyboardInterface::keyRepeatRate() const
     return d->keyRepeat.charactersPerSecond;
 }
 
+void KeyboardInterface::addAdditionalClient(ClientConnection *client)
+{
+    Q_ASSERT(!d->extraClients.contains(client));
+    d->extraClients.append(client);
+    connect(client, &ClientConnection::disconnected, this, &KeyboardInterface::removeAdditionalClient);
+}
+
+bool KeyboardInterface::containsAdditionalClient(ClientConnection *client) const
+{
+    return d->extraClients.contains(client);
+}
+
+void KeyboardInterface::removeAdditionalClient(ClientConnection *client)
+{
+    d->extraClients.removeAll(client);
+}
 }
