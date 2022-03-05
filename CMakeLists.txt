@@ -6,7 +6,7 @@ set(PROJECT_VERSION "5.24.80")
 set(PROJECT_VERSION_MAJOR 5)
 
 set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.86")
+set(KF5_MIN_VERSION "5.91")
 set(KDE_COMPILERSETTINGS_LEVEL "5.82")
 set(WAYLAND_MIN_VERSION "1.20")
 
@@ -45,11 +45,15 @@ ecm_setup_version(PROJECT VARIABLE_PREFIX KWAYLANDSERVER
                         SOVERSION 5)
 
 # Dependencies
-find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED Concurrent Gui WaylandClient)
+find_package(Qt${QT_MAJOR_VERSION} ${QT_MIN_VERSION} CONFIG REQUIRED Concurrent Gui WaylandClient)
 find_package(KF5Wayland ${KF5_MIN_VERSION} CONFIG REQUIRED)
 find_package(PlasmaWaylandProtocols 1.7.0 CONFIG REQUIRED)
 
-find_package(QtWaylandScanner REQUIRED)
+if (QT_MAJOR_VERSION EQUAL "5")
+    find_package(QtWaylandScanner REQUIRED)
+else()
+    find_package(Qt6 COMPONENTS WaylandCompositor CONFIG REQUIRED)
+endif()
 
 find_package(Wayland ${WAYLAND_MIN_VERSION} COMPONENTS Client Server)
 set_package_properties(Wayland PROPERTIES
@@ -84,7 +88,7 @@ if (BUILD_TESTING)
 endif()
 
 # create a Config.cmake and a ConfigVersion.cmake file and install them
-set(CMAKECONFIG_INSTALL_DIR "${CMAKECONFIG_INSTALL_PREFIX}/KWaylandServer")
+set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/KWaylandServer")
 
 if (BUILD_QCH)
     ecm_install_qch_export(
