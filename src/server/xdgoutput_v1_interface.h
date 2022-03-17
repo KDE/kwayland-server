@@ -94,6 +94,8 @@ public:
      */
     void name() const;
 
+    void setDpi(int dpi);
+
     /**
      * @brief Sets a longer description of the output
      * This should be consistent across reboots for the same monitor

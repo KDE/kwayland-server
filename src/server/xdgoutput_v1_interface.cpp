@@ -16,7 +16,7 @@
 
 namespace KWaylandServer
 {
-static const quint32 s_version = 3;
+static const quint32 s_version = 4;
 
 class XdgOutputManagerV1InterfacePrivate : public QtWaylandServer::zxdg_output_manager_v1
 {
@@ -43,6 +43,7 @@ public:
     QSize size;
     QString name;
     QString description;
+    int dpi = 96;
     bool dirty = false;
     bool doneOnce = false;
     QPointer<OutputInterface> output;
@@ -159,6 +160,17 @@ void XdgOutputV1Interface::setName(const QString &name)
     // this can only be set once before the client connects
 }
 
+void XdgOutputV1Interface::setDpi(int dpi)
+{
+    d->dpi = dpi;
+    const auto outputResources = d->resourceMap();
+    for (auto resource : outputResources) {
+        if (resource->version() >= 4) {
+            d->send_logical_dpi(resource->handle, dpi);
+        }
+    }
+}
+
 void XdgOutputV1Interface::setDescription(const QString &description)
 {
     d->description = description;
@@ -195,6 +207,9 @@ void XdgOutputV1InterfacePrivate::zxdg_output_v1_bind_resource(Resource *resourc
     }
     if (resource->version() >= ZXDG_OUTPUT_V1_DESCRIPTION_SINCE_VERSION) {
         send_description(resource->handle, description);
+    }
+    if (resource->version() >= 4) {
+        send_logical_dpi(resource->handle, dpi);
     }
 
     if (doneOnce) {
