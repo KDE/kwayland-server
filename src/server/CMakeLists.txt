@@ -57,6 +57,7 @@ set(SERVER_LIB_SRCS
     slide_interface.cpp
     subcompositor_interface.cpp
     surface_interface.cpp
+    surface_scale_interface.cpp
     surfacerole.cpp
     tablet_v2_interface.cpp
     textinput.cpp
@@ -282,6 +283,11 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
 ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
     PROTOCOL ${WaylandProtocols_DATADIR}/staging/drm-lease/drm-lease-v1.xml
     BASENAME drm-lease-v1
+)
+
+ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
+    PROTOCOL ${PROJECT_SOURCE_DIR}/src/protocols/surface-scale-dev.xml
+    BASENAME surface-scale-dev
 )
 
 add_library(KWaylandServer ${SERVER_LIB_SRCS})

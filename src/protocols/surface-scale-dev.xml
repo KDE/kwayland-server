@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="surface_scale_dev">
+
+  <description summary="extension allowing clients to render at different scale">
+    Warning! The protocol described in this file is currently in the
+    development phase. Backward incompatible changes may be added at
+    any time without changing version number.
+  </description>
+
+  <interface name="zwp_scaler_dev" version="1">
+    <description summary="surface scaling">
+      The global interface exposing surface scaling capabilities is used
+      to instantiate an interface extension for a wl_surface object.
+      This extended interface will then allow scaling the whole surface,
+      including all its subsurfaces.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="unbind from the scaling interface">
+        Informs the server that the client will not be using this
+        protocol object anymore. This does not affect any other objects,
+        zwp_surface_scale_dev objects included.
+      </description>
+    </request>
+
+    <enum name="error">
+      <entry name="surface_scale_exists" value="0"
+             summary="the surface already has a scale object associated"/>
+    </enum>
+
+    <request name="get_surface_scale">
+      <description summary="extend surface interface for surface scale">
+        Instantiate an interface extension for the given wl_surface to
+        scale it. If the given wl_surface already has a zwp_surface_scale_dev
+        object associated, the surface_scale_exists protocol error is raised.
+      </description>
+      <arg name="id" type="new_id" interface="zwp_surface_scale_dev"
+           summary="the new surface scale interface id"/>
+      <arg name="surface" type="object" interface="wl_surface"
+           summary="the surface"/>
+    </request>
+  </interface>
+
+  <interface name="zwp_surface_scale_dev" version="1">
+    <description summary="scale interface to a wl_surface">
+      An additional interface to a wl_surface object, which allows the
+      client to specify the scaling of the whole surface, including
+      subsurfaces and other associated objects.
+
+      If the wl_surface associated with the zwp_surface_scale_dev is
+      destroyed, all wp_viewport requests except 'destroy' raise the
+      protocol error no_surface.
+
+      If the zwp_surface_scale_dev object is destroyed, the scale
+      state is removed from the wl_surface. The change will be applied
+      on the next wl_surface.commit.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="remove scaling from the surface">
+        The associated wl_surface's scale state is removed.
+        The change is applied on the next wl_surface.commit.
+      </description>
+    </request>
+
+    <enum name="error">
+      <entry name="bad_value" value="0"
+             summary="negative or zero scale values"/>
+      <entry name="no_surface" value="1"
+             summary="the wl_surface was destroyed"/>
+    </enum>
+
+    <request name="set_client_scale">
+      <description summary="set the source rectangle for cropping">
+        Set the scale at which the client is rendering the associated wl_surface.
+
+        The scale state is double-buffered state, and will be
+        applied on the next wl_surface.commit.
+      </description>
+      <arg name="scale" type="fixed" summary="the client's current scale"/>
+    </request>
+
+    <event name="wanted_scale">
+      <description summary="scale the server wants the client to render at">
+        This event notifies the client that the server wants the client to
+        render at a particular scale. The client should adjust its scale
+        accordingly and notify the server using set_client_scale. If the
+        client doesn't do this, the server may apply its own scaling.
+      </description>
+      <arg name="scale" type="fixed" summary="the desired scale"/>
+    </event>
+  </interface>
+
+</protocol>

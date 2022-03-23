@@ -19,6 +19,7 @@ namespace KWaylandServer
 class IdleInhibitorV1Interface;
 class SurfaceRole;
 class ViewportInterface;
+class SurfaceScaleInterface;
 
 struct SurfaceState {
     void mergeInto(SurfaceState *target);
@@ -37,7 +38,7 @@ struct SurfaceState {
     bool childrenChanged = false;
     bool bufferScaleIsSet = false;
     bool bufferTransformIsSet = false;
-    qint32 bufferScale = 1;
+    qreal bufferScale = 1.0;
     OutputInterface::Transform bufferTransform = OutputInterface::Transform::Normal;
     wl_list frameCallbacks;
     QPoint offset = QPoint();
@@ -121,6 +122,7 @@ public:
 
     QVector<IdleInhibitorV1Interface *> idleInhibitors;
     ViewportInterface *viewportExtension = nullptr;
+    SurfaceScaleInterface *scalerExtension = nullptr;
     QScopedPointer<LinuxDmaBufV1Feedback> dmabufFeedbackV1;
     ClientConnection *client = nullptr;
 

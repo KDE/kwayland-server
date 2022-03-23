@@ -621,6 +621,7 @@ void SurfaceInterfacePrivate::applyState(SurfaceState *next)
             const QRegion bufferDamage = q->mapFromBuffer(current.bufferDamage);
             current.damage = windowRegion.intersected(current.damage.united(bufferDamage));
             Q_EMIT q->damaged(current.damage);
+            // DAVE, this should be reversed and sent as device by default
         }
     }
     if (surfaceToBufferMatrix != oldSurfaceToBufferMatrix) {
@@ -739,7 +740,7 @@ QRegion SurfaceInterface::input() const
     return d->inputRegion;
 }
 
-qint32 SurfaceInterface::bufferScale() const
+qreal SurfaceInterface::bufferScale() const
 {
     return d->current.bufferScale;
 }

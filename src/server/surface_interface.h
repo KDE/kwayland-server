@@ -163,7 +163,7 @@ public:
     QRegion damage() const;
     QRegion opaque() const;
     QRegion input() const;
-    qint32 bufferScale() const;
+    qreal bufferScale() const;
     /**
      * Returns the buffer transform that had been applied to the buffer to compensate for
      * output rotation.
@@ -350,7 +350,7 @@ Q_SIGNALS:
     /**
      * This signal is emitted when the scale of the attached buffer has changed.
      */
-    void bufferScaleChanged(qint32);
+    void bufferScaleChanged(qreal);
     /**
      * This signal is emitted when the buffer transform has changed.
      */
