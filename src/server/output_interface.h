@@ -126,6 +126,8 @@ public:
 
     static OutputInterface *get(wl_resource *native);
 
+    Display *display() const;
+
 Q_SIGNALS:
     void physicalSizeChanged(const QSize &);
     void globalPositionChanged(const QPoint &);
