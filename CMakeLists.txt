@@ -51,8 +51,6 @@ find_package(PlasmaWaylandProtocols 1.7.0 CONFIG REQUIRED)
 
 if (QT_MAJOR_VERSION EQUAL "5")
     find_package(QtWaylandScanner REQUIRED)
-else()
-    find_package(Qt6 COMPONENTS WaylandCompositor CONFIG REQUIRED)
 endif()
 
 find_package(Wayland ${WAYLAND_MIN_VERSION} COMPONENTS Client Server)
