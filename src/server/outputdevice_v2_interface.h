@@ -115,14 +115,8 @@ public:
     void setSubPixel(SubPixel subPixel);
     void setTransform(Transform transform);
 
-    void setModes(const QList<KWaylandServer::OutputDeviceModeV2Interface *> &modes);
-    void setCurrentMode(KWaylandServer::OutputDeviceModeV2Interface *mode);
-
-    /**
-     * Makes the mode with the specified @a size and @a refreshRate current.
-     * Returns @c false if no mode with the given attributes exists; otherwise returns @c true.
-     */
-    bool setCurrentMode(const QSize &size, int refreshRate);
+    void setModes(const QList<OutputDeviceModeV2Interface *> &modes, OutputDeviceModeV2Interface *currentMode);
+    void setCurrentMode(OutputDeviceModeV2Interface *mode);
 
     void setEdid(const QByteArray &edid);
     void setEnabled(bool enabled);
@@ -152,8 +146,7 @@ class KWAYLANDSERVER_EXPORT OutputDeviceModeV2Interface : public QObject
     Q_OBJECT
 public:
     enum class ModeFlag {
-        Current = 0x1,
-        Preferred = 0x2,
+        Preferred = 0x1,
     };
     Q_ENUM(ModeFlag)
     Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
@@ -164,8 +157,6 @@ public:
     QSize size() const;
     int refreshRate() const;
     OutputDeviceModeV2Interface::ModeFlags flags() const;
-
-    void setFlags(OutputDeviceModeV2Interface::ModeFlags newFlags);
 
     static OutputDeviceModeV2Interface *get(wl_resource *native);
 

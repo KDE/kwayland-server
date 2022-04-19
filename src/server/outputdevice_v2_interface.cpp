@@ -103,10 +103,9 @@ public:
     }
 
     OutputDeviceModeV2Interface *q;
-
-    QSize m_size;
-    int m_refreshRate = 60000;
-    OutputDeviceModeV2Interface::ModeFlags m_flags;
+    const QSize m_size;
+    const int m_refreshRate;
+    const OutputDeviceModeV2Interface::ModeFlags m_flags;
 
 protected:
     Resource *kde_output_device_mode_v2_allocate() override;
@@ -176,12 +175,7 @@ void OutputDeviceV2Interface::setCurrentMode(OutputDeviceModeV2Interface *mode)
     if (mode == d->currentMode) {
         return;
     }
-    if (d->currentMode) {
-        // another mode has the current flag - remove
-        d->currentMode->setFlags(d->currentMode->flags() & ~uint(OutputDeviceModeV2Interface::ModeFlag::Current));
-    }
 
-    mode->setFlags(mode->flags() | OutputDeviceModeV2Interface::ModeFlag::Current);
     d->currentMode = mode;
 
     const auto clientResources = d->resourceMap();
@@ -191,18 +185,6 @@ void OutputDeviceV2Interface::setCurrentMode(OutputDeviceModeV2Interface *mode)
         d->sendDone(resource);
     }
     d->updateGeometry();
-}
-
-bool OutputDeviceV2Interface::setCurrentMode(const QSize &size, int refreshRate)
-{
-    auto mode = std::find_if(d->modes.begin(), d->modes.end(), [size, refreshRate](OutputDeviceModeV2Interface *mode) {
-        return mode->size() == size && mode->refreshRate() == refreshRate;
-    });
-    if (mode == d->modes.end()) {
-        return false;
-    }
-    setCurrentMode(*mode);
-    return true;
 }
 
 int32_t OutputDeviceV2InterfacePrivate::toTransform() const
@@ -482,19 +464,14 @@ OutputDeviceV2Interface::Transform OutputDeviceV2Interface::transform() const
     return d->transform;
 }
 
-void OutputDeviceV2Interface::setModes(const QList<OutputDeviceModeV2Interface *> &modes)
+void OutputDeviceV2Interface::setModes(const QList<OutputDeviceModeV2Interface *> &modes, OutputDeviceModeV2Interface *currentMode)
 {
-    if (modes.isEmpty()) {
-        qCWarning(KWAYLAND_SERVER) << "Tried to set no modes for output";
-        return;
-    }
+    Q_ASSERT(modes.contains(currentMode));
 
     const auto clientResources = d->resourceMap();
 
     const auto oldModes = d->modes;
     d->modes.clear();
-    d->currentMode = nullptr;
-
     for (OutputDeviceModeV2Interface *outputDeviceMode : modes) {
         d->modes << outputDeviceMode;
         outputDeviceMode->setParent(this);
@@ -502,16 +479,9 @@ void OutputDeviceV2Interface::setModes(const QList<OutputDeviceModeV2Interface *
         for (auto resource : clientResources) {
             d->sendNewMode(resource, outputDeviceMode);
         }
-
-        if (outputDeviceMode->flags().testFlag(OutputDeviceModeV2Interface::ModeFlag::Current)) {
-            d->currentMode = outputDeviceMode;
-        }
     }
 
-    if (!d->currentMode) {
-        d->currentMode = d->modes.at(0);
-    }
-
+    d->currentMode = currentMode;
     for (auto resource : clientResources) {
         d->sendCurrentMode(resource);
     }
@@ -750,11 +720,6 @@ int OutputDeviceModeV2Interface::refreshRate() const
 OutputDeviceModeV2Interface::ModeFlags OutputDeviceModeV2Interface::flags() const
 {
     return d->m_flags;
-}
-
-void OutputDeviceModeV2Interface::setFlags(OutputDeviceModeV2Interface::ModeFlags flags)
-{
-    d->m_flags = flags;
 }
 
 void OutputDeviceModeV2InterfacePrivate::bindResource(wl_resource *resource)
