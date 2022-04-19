@@ -7,8 +7,8 @@ platforms:
     - name: Linux
     - name: FreeBSD
 portingAid: false
-deprecated: false
-release: true
+deprecated: true
+release: false
 libraries:
    - cmake: "Plasma::KWaylandServer"
 cmakename: KWaylandServer
