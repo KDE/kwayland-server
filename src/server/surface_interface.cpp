@@ -16,6 +16,7 @@
 #include "subcompositor_interface.h"
 #include "subsurface_interface_p.h"
 #include "surface_interface_p.h"
+#include "surface_scale_interface_p.h"
 #include "surfacerole_p.h"
 #include "utils.h"
 
@@ -1033,6 +1034,13 @@ QPointF SurfaceInterface::mapToChild(SurfaceInterface *child, const QPointF &poi
 QSize SurfaceInterface::bufferSize() const
 {
     return d->bufferSize;
+}
+
+void SurfaceInterface::setScale(qreal scale)
+{
+    if (d->scalerExtension) {
+        d->scalerExtension->send_preferred_scale(wl_fixed_from_double(scale));
+    }
 }
 
 } // namespace KWaylandServer

@@ -13,36 +13,35 @@ static const int s_version = 1;
 
 namespace KWaylandServer
 {
-class ScalerInterfacePrivate : public QtWaylandServer::zwp_scaler_dev
+class ScalerInterfacePrivate : public QtWaylandServer::wp_fractional_scale_manager_v1
 {
 protected:
-    void zwp_scaler_dev_destroy(Resource *resource) override;
-    void zwp_scaler_dev_get_surface_scale(Resource *resource, uint32_t id, wl_resource *surface) override;
+    void wp_fractional_scale_manager_v1_destroy(Resource *resource) override;
+    void wp_fractional_scale_manager_v1_get_fractional_scale(Resource *resource, uint32_t id, wl_resource *surface) override;
 };
 
-void ScalerInterfacePrivate::zwp_scaler_dev_destroy(Resource *resource)
+void ScalerInterfacePrivate::wp_fractional_scale_manager_v1_destroy(Resource *resource)
 {
     wl_resource_destroy(resource->handle);
 }
 
-void ScalerInterfacePrivate::zwp_scaler_dev_get_surface_scale(Resource *resource, uint32_t id, struct ::wl_resource *surface_resource)
+void ScalerInterfacePrivate::wp_fractional_scale_manager_v1_get_fractional_scale(Resource *resource, uint32_t id, struct ::wl_resource *surface_resource)
 {
     SurfaceInterface *surface = SurfaceInterface::get(surface_resource);
 
-    // TODO
-    //    SurfaceScaleInterface *scaleIface = SurfaceScaleInterface::get(surface);
-    //    if (scaleIface) {
-    //        wl_resource_post_error(resource->handle, error_viewport_exists, "the specified surface already has a ");
-    //        return;
-    //    }
+    SurfaceScaleInterface *scaleIface = SurfaceScaleInterface::get(surface);
+    if (scaleIface) {
+        //        wl_resource_post_error(resource->handle, error_viewport_exists, "the specified surface already has a ");
+        return;
+    }
 
-    wl_resource *surfaceScalerResource = wl_resource_create(resource->client(), &zwp_scaler_dev_interface, resource->version(), id);
+    wl_resource *surfaceScalerResource = wl_resource_create(resource->client(), &wp_fractional_scale_v1_interface, resource->version(), id);
 
     new SurfaceScaleInterface(surface, surfaceScalerResource);
 }
 
 SurfaceScaleInterface::SurfaceScaleInterface(SurfaceInterface *surface, wl_resource *resource)
-    : QtWaylandServer::zwp_surface_scale_dev(resource)
+    : QtWaylandServer::wp_fractional_scale_v1(resource)
     , surface(surface)
 {
     SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
@@ -60,14 +59,6 @@ SurfaceScaleInterface::~SurfaceScaleInterface()
 SurfaceScaleInterface *SurfaceScaleInterface::get(SurfaceInterface *surface)
 {
     return SurfaceInterfacePrivate::get(surface)->scalerExtension;
-}
-
-void SurfaceScaleInterface::zwp_surface_scale_dev_set_client_scale(Resource *resource, wl_fixed_t scale)
-{
-    Q_UNUSED(resource);
-    SurfaceInterfacePrivate *surfacePrivate = SurfaceInterfacePrivate::get(surface);
-    surfacePrivate->pending.bufferScale = wl_fixed_to_double(scale);
-    surfacePrivate->pending.bufferScaleIsSet = true;
 }
 
 ScalerInterface::ScalerInterface(Display *display, QObject *parent)

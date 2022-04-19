@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "qwayland-server-surface-scale-dev.h"
+#include "qwayland-server-wp-fractional-scale-v1.h"
 
 #include <QPointer>
 
@@ -14,7 +14,7 @@ namespace KWaylandServer
 {
 class SurfaceInterface;
 
-class SurfaceScaleInterface : public QtWaylandServer::zwp_surface_scale_dev
+class SurfaceScaleInterface : public QtWaylandServer::wp_fractional_scale_v1
 {
 public:
     SurfaceScaleInterface(SurfaceInterface *surface, wl_resource *resource);
@@ -25,9 +25,7 @@ public:
     QPointer<SurfaceInterface> surface;
 
 protected:
-    //    void zwp_surface_scale_dev_destroy_resource(Resource *resource) override;
-    //    void zwp_surface_scale_dev_destroy(Resource *resource) override;
-    void zwp_surface_scale_dev_set_client_scale(Resource *resource, wl_fixed_t scale) override;
+    // dtor blah
 };
 
 } // namespace KWaylandServer

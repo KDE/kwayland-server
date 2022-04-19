@@ -286,8 +286,8 @@ ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
 )
 
 ecm_add_qtwayland_server_protocol_kde(SERVER_LIB_SRCS
-    PROTOCOL ${PROJECT_SOURCE_DIR}/src/protocols/surface-scale-dev.xml
-    BASENAME surface-scale-dev
+    PROTOCOL ${PROJECT_SOURCE_DIR}/src/protocols/wp-fractional-scale-v1.xml
+    BASENAME fractional-scale-v1
 )
 
 add_library(KWaylandServer ${SERVER_LIB_SRCS})

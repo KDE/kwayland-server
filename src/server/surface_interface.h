@@ -317,6 +317,8 @@ public:
      */
     static SurfaceInterface *get(quint32 id, const ClientConnection *client);
 
+    void setScale(qreal scale);
+
 Q_SIGNALS:
     /**
      * This signal is emitted when the underlying wl_surface resource is about to be freed.
