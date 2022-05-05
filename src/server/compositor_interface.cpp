@@ -7,7 +7,6 @@
 #include "compositor_interface.h"
 #include "display.h"
 #include "region_interface_p.h"
-#include "surface_interface.h"
 
 #include "qwayland-server-wayland.h"
 

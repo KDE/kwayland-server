@@ -5,7 +5,6 @@
 */
 #include "primaryselectionsource_v1_interface.h"
 #include "clientconnection.h"
-#include "primaryselectiondevicemanager_v1_interface.h"
 #include "utils.h"
 // Qt
 #include <QStringList>

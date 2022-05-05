@@ -6,7 +6,6 @@
 */
 #include "datasource_interface.h"
 #include "clientconnection.h"
-#include "datadevicemanager_interface.h"
 #include "utils.h"
 // Qt
 #include <QStringList>

@@ -6,9 +6,6 @@
 #include "fakeinput_interface.h"
 #include "display.h"
 
-#include <QPointF>
-#include <QSizeF>
-
 #include <qwayland-server-fake-input.h>
 #include <wayland-server.h>
 

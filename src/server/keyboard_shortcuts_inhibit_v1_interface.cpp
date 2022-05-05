@@ -9,8 +9,6 @@
 #include <qwayland-server-keyboard-shortcuts-inhibit-unstable-v1.h>
 
 #include "display.h"
-#include "seat_interface.h"
-#include "surface_interface.h"
 
 static const int s_version = 1;
 

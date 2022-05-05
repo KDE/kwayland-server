@@ -9,7 +9,6 @@
 #include "display.h"
 #include "logging.h"
 #include "outputchangeset_v2_p.h"
-#include "outputdevice_v2_interface.h"
 
 #include "qwayland-server-kde-output-device-v2.h"
 #include "qwayland-server-kde-output-management-v2.h"

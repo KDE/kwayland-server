@@ -5,7 +5,6 @@
 */
 
 #include "layershell_v1_interface.h"
-#include "display.h"
 #include "logging.h"
 #include "surface_interface.h"
 #include "surfacerole_p.h"
